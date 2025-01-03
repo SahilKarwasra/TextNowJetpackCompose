@@ -22,72 +22,33 @@ fun AppNavigation() {
     val navController = rememberNavController()
 
     val viewModel: AuthViewModel = koinViewModel()
-    var appState by remember { mutableStateOf<AppState>(AppState.Loading) }
 
-    LaunchedEffect(Unit) {
-        appState = try {
-            val authResult = viewModel.checkAuth()
-            authResult.fold(
-                onSuccess = {
-                    Log.e("AppNavigation", "Authentication Successfully")
-                    AppState.Authenticated
-                },
-                onFailure = { error ->
-                    Log.e("AppNavigation", "Authentication check failed", error)
-                    AppState.Unauthenticated
-                }
-            )
-        } catch (e: Exception) {
-            Log.e("AppNavigation", "Unexpected error during auth check", e)
-            AppState.Unauthenticated
-        }
-    }
-
-    // Navigate based on app state
-    LaunchedEffect(appState) {
-        when (appState) {
-            AppState.Authenticated -> {
-                navController.navigate(DestinationScreen.HomeScreenObj) {
-                    popUpTo(0) { inclusive = true }
-                }
-            }
-            AppState.Unauthenticated -> {
-                navController.navigate(DestinationScreen.SignupScreenObj) {
-                    popUpTo(0) { inclusive = true }
-                }
-            }
-            AppState.Loading -> {
-                // Do nothing, keep showing loading screen
-            }
-        }
-    }
 
 
     NavHost(
         navController = navController,
-        startDestination = DestinationScreen.LoadingScreenObj
+        startDestination = if (viewModel.isAuthenticated) DestinationScreen.HomeScreenObj
+        else DestinationScreen.SignupScreenObj
     ) {
         composable<DestinationScreen.LoadingScreenObj> {
             LoadingScreen()
         }
         composable<DestinationScreen.SignupScreenObj> {
             SignUpScreen(navigate = {
-                navController.navigate(it)
+                navController.navigate(it) {
+                    popUpTo(0) { inclusive = true }
+                }
             })
         }
         composable<DestinationScreen.LoginScreenObj> {
             LoginScreen(navigate = {
-                navController.navigate(it)
+                navController.navigate(it) {
+                    popUpTo(0) { inclusive = true }
+                }
             })
         }
         composable<DestinationScreen.HomeScreenObj> {
             HomeScreen()
         }
     }
-}
-
-sealed class AppState {
-    object Loading : AppState()
-    object Authenticated : AppState()
-    object Unauthenticated : AppState()
 }

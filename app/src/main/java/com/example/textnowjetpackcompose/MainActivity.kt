@@ -20,11 +20,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             TextNowJetpackComposeTheme {
-                Scaffold {
-                    Surface(modifier = Modifier.padding(it)) {
-                        AppNavigation()
-                    }
-                }
+                MainApp()
             }
         }
     }

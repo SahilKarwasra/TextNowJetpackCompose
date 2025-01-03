@@ -10,6 +10,8 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
@@ -20,6 +22,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -28,9 +31,12 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -46,9 +52,9 @@ import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun SignUpScreen(
-    modifier: Modifier = Modifier,
     viewModel: AuthViewModel = koinViewModel(),
-    navigate: (DestinationScreen) -> Unit) {
+    navigate: (DestinationScreen) -> Unit
+) {
     Column(
         modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.Center,
@@ -97,6 +103,8 @@ fun SignUpScreen(
             if (passwordValidation is ValidationResult.Invalid) passwordValidation.message else null
 
 
+        val focusManager = LocalFocusManager.current
+
 
         Image(
             painter = painterResource(id = imageResource),
@@ -115,7 +123,6 @@ fun SignUpScreen(
             onValueChange = {
                 username = it
             },
-            keyboardType = KeyboardType.Text,
             placeholder = {
                 Text(
                     text = "Username",
@@ -123,20 +130,35 @@ fun SignUpScreen(
                 )
             },
             isError = usernameError != null,
-        )
+            keyboardOptions = KeyboardOptions(
+                imeAction = ImeAction.Next
+            ),
+            keyboardActions = KeyboardActions (
+                onNext = {
+                    focusManager.moveFocus(FocusDirection.Down)
+                }
+            )
+            )
         Spacer(modifier = Modifier.padding(top = 12.dp))
         AuthTextField(
             value = email,
             onValueChange = {
                 email = it
             },
-            keyboardType = KeyboardType.Text,
             placeholder = {
                 Text(
                     text = "Email",
                     color = MaterialTheme.colorScheme.onSurface
                 )
             },
+            keyboardOptions = KeyboardOptions(
+                imeAction = ImeAction.Next
+            ),
+            keyboardActions = KeyboardActions (
+                onNext = {
+                    focusManager.moveFocus(FocusDirection.Down)
+                }
+            ),
             isError = emailError != null
         )
         Spacer(modifier = Modifier.padding(top = 12.dp))
@@ -146,7 +168,6 @@ fun SignUpScreen(
                 password = it
             },
 
-            keyboardType = KeyboardType.Password,
             visualTransformation = if (showPassword) VisualTransformation.None else PasswordVisualTransformation(),
             trailingIcon = {
                 IconButton(onClick = { showPassword = !showPassword }) {
@@ -165,7 +186,15 @@ fun SignUpScreen(
                     color = MaterialTheme.colorScheme.onSurface
                 )
             },
-            isError = passwordError != null
+            isError = passwordError != null,
+            keyboardOptions = KeyboardOptions(
+                imeAction = ImeAction.Done,
+            ),
+            keyboardActions = KeyboardActions (
+                onDone = {
+                    focusManager.clearFocus()
+                }
+            )
         )
         Spacer(modifier = Modifier.padding(top = 5.dp))
 
@@ -185,7 +214,6 @@ fun SignUpScreen(
                     && passwordValidation is ValidationResult.Valid
                 ) {
                     viewModel.signup(request)
-                    Toast.makeText(context, "SignUp Successfully", Toast.LENGTH_SHORT).show()
                 } else {
                     val errorMessage = when {
                         usernameValidation is ValidationResult.Invalid -> usernameValidation.message
@@ -207,6 +235,19 @@ fun SignUpScreen(
                 "SignUp"
             )
         }
+        if (viewModel.errorMessage.value != null) {
+            LaunchedEffect(viewModel.errorMessage.value) {
+                Toast.makeText(context, viewModel.errorMessage.value, Toast.LENGTH_SHORT).show()
+                viewModel.errorMessage.value = null
+            }
+        }
+        if (viewModel.authUserResponse.value != null) {
+            LaunchedEffect(viewModel.authUserResponse.value) {
+                Toast.makeText(context, "Signup Successful", Toast.LENGTH_SHORT).show()
+                viewModel.authUserResponse.value = null
+                navigate(DestinationScreen.HomeScreenObj)
+            }
+        }
         Spacer(modifier = Modifier.padding(bottom = 25.dp))
         Row {
             Text(
@@ -220,6 +261,7 @@ fun SignUpScreen(
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.clickable {
+                    navigate(DestinationScreen.LoginScreenObj)
                 }
             )
         }

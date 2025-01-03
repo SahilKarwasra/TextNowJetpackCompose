@@ -23,11 +23,12 @@ fun AuthTextField(
     modifier: Modifier = Modifier,
     label: @Composable (() -> Unit)? = null,
     visualTransformation: VisualTransformation = VisualTransformation.None,
-    keyboardType: KeyboardType,
     trailingIcon: @Composable (() -> Unit)? = null,
     placeholder: @Composable (() -> Unit)? = null,
     isError: Boolean = false,
-    supportingText: @Composable (() -> Unit)? = null
+    supportingText: @Composable (() -> Unit)? = null,
+    keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
+    keyboardActions: KeyboardActions = KeyboardActions.Default
 ) {
     TextField(
         value = value,
@@ -43,14 +44,15 @@ fun AuthTextField(
             unfocusedIndicatorColor = Color.Transparent,
             errorContainerColor = MaterialTheme.colorScheme.surfaceContainer
         ),
-        keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
-        keyboardActions = KeyboardActions.Default,
+        keyboardOptions = keyboardOptions,
+        keyboardActions = keyboardActions,
         visualTransformation = visualTransformation,
         maxLines = 1,
         trailingIcon = trailingIcon,
         placeholder = placeholder,
         isError = isError,
-        supportingText = supportingText
+        supportingText = supportingText,
+//        keyboardType = keyboardType
     )
 
 }

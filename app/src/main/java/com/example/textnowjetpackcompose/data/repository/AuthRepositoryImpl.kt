@@ -6,6 +6,7 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import com.example.textnowjetpackcompose.data.model.SignupRequest
 import com.example.textnowjetpackcompose.data.model.AuthUserResponse
+import com.example.textnowjetpackcompose.data.model.LoginRequest
 import com.example.textnowjetpackcompose.data.remote.AuthApi
 import com.example.textnowjetpackcompose.di.dataStore
 import kotlinx.coroutines.flow.first
@@ -25,14 +26,23 @@ class AuthRepositoryImpl(
         }
     }
 
-    override suspend fun checkAuth(): AuthUserResponse {
+    override suspend fun login(request: LoginRequest): Result<AuthUserResponse> {
+        return try {
+            val response = authApi.login(request)
+            Result.success(response)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+    override suspend fun checkAuth(): Result<AuthUserResponse> {
 
         Log.d("AuthRepositoryImpl", "checkAuth: Starting checkAuth request")
         return try {
-            authApi.checkAuth()
+            val response = authApi.checkAuth()
+            Result.success(response)
         } catch (e: Exception) {
             Log.e("AuthRepositoryImpl", "checkAuth: Error during checkAuth", e)
-            throw e
+            Result.failure(e)
         }
     }
 }

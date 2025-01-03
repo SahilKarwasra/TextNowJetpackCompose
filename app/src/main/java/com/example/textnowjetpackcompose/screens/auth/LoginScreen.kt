@@ -1,5 +1,7 @@
 package com.example.textnowjetpackcompose.screens.auth
 
+import android.widget.Toast
+import androidx.activity.result.launch
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -8,8 +10,9 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
@@ -18,30 +21,40 @@ import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.textnowjetpackcompose.R
+import com.example.textnowjetpackcompose.data.model.LoginRequest
 import com.example.textnowjetpackcompose.navigation.DestinationScreen
 import com.example.textnowjetpackcompose.screens.auth.components.AuthTextField
+import kotlinx.coroutines.launch
+import org.koin.androidx.compose.koinViewModel
 
 @Composable
-fun LoginScreen(modifier: Modifier = Modifier, navigate: (DestinationScreen) -> Unit) {
+fun LoginScreen( navigate: (DestinationScreen) -> Unit,viewModel: AuthViewModel = koinViewModel()) {
     Column(
         modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.Center,
@@ -64,6 +77,9 @@ fun LoginScreen(modifier: Modifier = Modifier, navigate: (DestinationScreen) -> 
             mutableStateOf(false)
         }
 
+        val focusManager = LocalFocusManager.current
+        val context = LocalContext.current
+
         Image(
             painter = painterResource(id = imageResource),
             contentDescription = null
@@ -81,13 +97,20 @@ fun LoginScreen(modifier: Modifier = Modifier, navigate: (DestinationScreen) -> 
             onValueChange = {
                 email = it
             },
-            keyboardType = KeyboardType.Text,
             placeholder = {
                 Text(
                     text = "Email",
                     color = MaterialTheme.colorScheme.onSurface
                 )
-            }
+            },
+            keyboardOptions = KeyboardOptions(
+                imeAction = ImeAction.Next
+            ),
+            keyboardActions = KeyboardActions (
+                onNext = {
+                    focusManager.moveFocus(FocusDirection.Down)
+                }
+            ),
         )
         Spacer(modifier = Modifier.padding(top = 12.dp))
         AuthTextField(
@@ -96,7 +119,6 @@ fun LoginScreen(modifier: Modifier = Modifier, navigate: (DestinationScreen) -> 
                 password = it
             },
 
-            keyboardType = KeyboardType.Password,
             visualTransformation = if (showPassword) VisualTransformation.None else PasswordVisualTransformation(),
             trailingIcon = {
                 IconButton(onClick = { showPassword = !showPassword }) {
@@ -115,10 +137,29 @@ fun LoginScreen(modifier: Modifier = Modifier, navigate: (DestinationScreen) -> 
                     color = MaterialTheme.colorScheme.onSurface
                 )
             },
+            keyboardOptions = KeyboardOptions(
+                imeAction = ImeAction.Done
+            ),
+            keyboardActions = KeyboardActions (
+                onDone = {
+                    focusManager.clearFocus()
+                }
+            ),
         )
         Spacer(modifier = Modifier.padding(top = 5.dp))
         Button(
-            onClick = {},
+            onClick = {
+                val request = LoginRequest(
+                    email = email,
+                    password = password
+                )
+                try {
+                    viewModel.login(request)
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+
+            },
             colors = ButtonColors(
                 containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
                 contentColor = MaterialTheme.colorScheme.onSurface,
@@ -129,6 +170,19 @@ fun LoginScreen(modifier: Modifier = Modifier, navigate: (DestinationScreen) -> 
             Text(
                 "Login"
             )
+        }
+        if (viewModel.errorMessage.value != null) {
+            LaunchedEffect(viewModel.errorMessage.value) {
+                Toast.makeText(context, viewModel.errorMessage.value, Toast.LENGTH_SHORT).show()
+                viewModel.errorMessage.value = null
+            }
+        }
+        if (viewModel.authUserResponse.value != null) {
+            LaunchedEffect(viewModel.authUserResponse.value) {
+                Toast.makeText(context, "Login Successful", Toast.LENGTH_SHORT).show()
+                viewModel.authUserResponse.value = null
+                navigate(DestinationScreen.HomeScreenObj)
+            }
         }
         Spacer(modifier = Modifier.padding(bottom = 25.dp))
         Row {
@@ -143,6 +197,7 @@ fun LoginScreen(modifier: Modifier = Modifier, navigate: (DestinationScreen) -> 
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.clickable {
+                    navigate(DestinationScreen.SignupScreenObj)
                 }
             )
         }
