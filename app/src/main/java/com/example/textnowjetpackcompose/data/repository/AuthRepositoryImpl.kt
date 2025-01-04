@@ -1,17 +1,12 @@
 package com.example.textnowjetpackcompose.data.repository
 
 import android.util.Log
-import androidx.core.graphics.get
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
-import com.example.textnowjetpackcompose.data.model.SignupRequest
 import com.example.textnowjetpackcompose.data.model.AuthUserResponse
 import com.example.textnowjetpackcompose.data.model.LoginRequest
+import com.example.textnowjetpackcompose.data.model.SignupRequest
 import com.example.textnowjetpackcompose.data.remote.AuthApi
-import com.example.textnowjetpackcompose.di.dataStore
-import kotlinx.coroutines.flow.first
-import kotlin.text.append
-import kotlin.text.first
 
 class AuthRepositoryImpl(
     private val authApi: AuthApi,
@@ -34,14 +29,15 @@ class AuthRepositoryImpl(
             Result.failure(e)
         }
     }
+
     override suspend fun checkAuth(): Result<AuthUserResponse> {
 
-        Log.d("AuthRepositoryImpl", "checkAuth: Starting checkAuth request")
+        Log.d("AuthRepositoryImpl", "checkAuth: Starting checkAuth request AuthRepositoryImpl")
         return try {
             val response = authApi.checkAuth()
             Result.success(response)
         } catch (e: Exception) {
-            Log.e("AuthRepositoryImpl", "checkAuth: Error during checkAuth", e)
+            Log.e("AuthRepositoryImpl", "checkAuth: Error during checkAuth AuthRepositoryImpl", e)
             Result.failure(e)
         }
     }

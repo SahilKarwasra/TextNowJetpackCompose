@@ -1,32 +1,30 @@
 package com.example.textnowjetpackcompose.data.remote
 
 import android.util.Log
-import android.widget.Toast
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.ui.platform.LocalContext
 import androidx.datastore.core.DataStore
-import androidx.datastore.dataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.example.textnowjetpackcompose.data.HttpRoutes
-import com.example.textnowjetpackcompose.data.model.SignupRequest
 import com.example.textnowjetpackcompose.data.model.AuthUserResponse
 import com.example.textnowjetpackcompose.data.model.LoginRequest
+import com.example.textnowjetpackcompose.data.model.SignupRequest
 import io.ktor.client.HttpClient
-import kotlinx.serialization.json.Json
 import io.ktor.client.call.body
 import io.ktor.client.request.get
+import io.ktor.client.request.headers
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.HttpResponse
 import io.ktor.http.ContentType
+import io.ktor.http.Cookie
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import io.ktor.http.headers
-import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
 
 class AuthApiImpl(
     private val client: HttpClient,
@@ -71,6 +69,8 @@ class AuthApiImpl(
                 Log.e("AuthApiImpl", "signup: Token is null in Set-Cookie header")
                 throw Exception("Signup failed: Token is null in Set-Cookie header")
             }
+
+
             return response.body()
         } catch (e:Exception) {
             Log.e("AuthApiImpl", "signup: Error during signup", e)
@@ -111,45 +111,43 @@ class AuthApiImpl(
                     Log.d("Cookie Login", "login: Cookie stored in DataStore")
                 }
             } else {
-                Log.e("AuthApiImpl", "login: Token is null in Set-Cookie header")
+                Log.e("Cookie Login", "login: Token is null in Set-Cookie header")
                 throw Exception("Login failed: Token is null in Set-Cookie header")
             }
             return response.body()
         } catch (e: Exception) {
-            Log.e("AuthApiImpl", "login: Error during ", e)
-            throw e // Re-throw the exception to be handled by the ViewModel
+            Log.e("Cookie Login", "login: Error during ", e)
+            throw e
         }
     }
 
+
+    private val TAG = "CheckAuth AuthApiImpl"
     override suspend fun checkAuth(): AuthUserResponse {
-        Log.d("CheckAuth", "checkAuth: Starting checkAuth request")
-        val token = dataStore.data.first()[authTokenKey]
-        Log.d("CheckAuth", "checkAuth: Cookie From DataStore: $token")
+        val token = dataStore.data.firstOrNull()?.get(authTokenKey)
+        Log.d(TAG, "checkAuth: Token from dataStore: $token")
+        val rawToken = token?.substringBefore(";")
+        Log.d(TAG, "checkAuth: Raw Cookie from DataStore: $rawToken")
 
-        val response : HttpResponse = client.get(HttpRoutes.checkAuth)
-        if (token != null) {
-            headers {
-                append(HttpHeaders.Cookie, token)
-                Log.d("CheckAuth", "checkAuth: Cookie Header sent: $token")
-            }
-        }
-
-        return when (response.status) {
-            HttpStatusCode.OK -> {
-                try {
-                    val responseBody = response.body<String>()
-                    Json.decodeFromString(responseBody)
-                } catch (e: Exception) {
-                    Log.e("CheckAuth", "checkAuth: Error parsing JSON response", e)
-                    throw Exception("Error parsing JSON response")
+        try {
+            val response: HttpResponse = client.get(HttpRoutes.checkAuth) {
+                headers {
+                    append(HttpHeaders.Cookie, "$rawToken")
                 }
             }
-            else -> {
-                Log.e("CheckAuth", "checkAuth: HTTP error: ${response.status}")
+
+            Log.d(TAG, "checkAuth: Response status: ${response.status}")
+            if (response.status == HttpStatusCode.OK) {
+                return response.body()
+            } else {
+                val errorBody = response.body<String>()
+                Log.e(TAG, "checkAuth: HTTP error: ${response.status}, body: $errorBody")
                 throw Exception("HTTP error: ${response.status}")
             }
+        } catch (e: Exception) {
+            Log.e(TAG, "checkAuth: Exception during request", e)
+            throw e
         }
     }
-
 
 }

@@ -1,12 +1,8 @@
 package com.example.textnowjetpackcompose.navigation
 
-import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.collectAsState
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -20,15 +16,20 @@ import org.koin.androidx.compose.koinViewModel
 @Composable
 fun AppNavigation() {
     val navController = rememberNavController()
-
     val viewModel: AuthViewModel = koinViewModel()
 
+    val isAuthenticated = viewModel.isAuthenticated
+    val isLoading = viewModel.isLoading.collectAsState()
 
-
+    // Perform authentication check on navigation start
+    LaunchedEffect(Unit) {
+        viewModel.checkAuth()
+    }
     NavHost(
         navController = navController,
-        startDestination = if (viewModel.isAuthenticated) DestinationScreen.HomeScreenObj
-        else DestinationScreen.SignupScreenObj
+        startDestination = if (isLoading.value) DestinationScreen.LoadingScreenObj else {
+            if (isAuthenticated) DestinationScreen.HomeScreenObj else DestinationScreen.SignupScreenObj
+        }
     ) {
         composable<DestinationScreen.LoadingScreenObj> {
             LoadingScreen()

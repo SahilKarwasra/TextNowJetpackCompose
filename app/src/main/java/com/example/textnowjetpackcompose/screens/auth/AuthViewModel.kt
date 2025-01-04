@@ -10,18 +10,23 @@ import com.example.textnowjetpackcompose.data.model.SignupRequest
 import com.example.textnowjetpackcompose.data.model.AuthUserResponse
 import com.example.textnowjetpackcompose.data.model.LoginRequest
 import com.example.textnowjetpackcompose.data.repository.AuthRepository
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
 class AuthViewModel (private val authRepository: AuthRepository) : ViewModel()  {
 
-    private val isLoading = mutableStateOf(false)
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading: StateFlow<Boolean> get() = _isLoading
     val errorMessage = mutableStateOf<String?>(null)
     val authUserResponse = mutableStateOf<AuthUserResponse?>(null)
+    var isAuthenticated by mutableStateOf(false)
+
 
 
     fun signup(signupRequest: SignupRequest) {
         viewModelScope.launch {
-            isLoading.value = true
+            _isLoading.value = true
             errorMessage.value = null
             try {
                 val result = authRepository.signup(signupRequest)
@@ -40,7 +45,7 @@ class AuthViewModel (private val authRepository: AuthRepository) : ViewModel()  
                 errorMessage.value = e.message ?:"An Unexpected message occurred during signup"
                 Log.d("Signup Catch", "signup: Error ${e.message}")
             } finally {
-                isLoading.value = false
+                _isLoading.value = false
             }
 
         }
@@ -48,7 +53,7 @@ class AuthViewModel (private val authRepository: AuthRepository) : ViewModel()  
 
     fun login(loginRequest: LoginRequest) {
         viewModelScope.launch {
-            isLoading.value = true
+            _isLoading.value = true
             errorMessage.value = null
             try {
                 val result = authRepository.login(loginRequest)
@@ -65,16 +70,16 @@ class AuthViewModel (private val authRepository: AuthRepository) : ViewModel()  
                 errorMessage.value = e.message ?:"An Unexpected message occurred during login"
                 Log.d("Login Catch", "login: Error ${e.message}")
             } finally {
-                isLoading.value = false
+                _isLoading.value = false
             }
         }
     }
 
-    var isAuthenticated by mutableStateOf(false)
 
     fun checkAuth() {
+        errorMessage.value = null
         viewModelScope.launch {
-            isLoading.value = true
+            _isLoading.value = true
             errorMessage.value = null
             try {
                 val result = authRepository.checkAuth()
@@ -93,7 +98,7 @@ class AuthViewModel (private val authRepository: AuthRepository) : ViewModel()  
                 errorMessage.value = e.message ?:"An Unexpected message occurred during checkAuth"
                 Log.d("CheckAuth Catch", "checkAuth: Error ${e.message}")
             } finally {
-                isLoading.value = false
+                _isLoading.value = false
             }
         }
     }

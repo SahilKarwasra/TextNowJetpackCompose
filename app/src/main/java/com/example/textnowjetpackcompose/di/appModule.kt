@@ -12,6 +12,8 @@ import com.example.textnowjetpackcompose.screens.auth.AuthViewModel
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.client.plugins.cookies.AcceptAllCookiesStorage
+import io.ktor.client.plugins.cookies.HttpCookies
 import io.ktor.client.plugins.logging.LogLevel
 import io.ktor.client.plugins.logging.Logging
 import io.ktor.serialization.kotlinx.json.json
@@ -35,6 +37,9 @@ val appModule = module {
             }
             install(Logging) {
                 level = LogLevel.ALL
+            }
+            install(HttpCookies) {
+                storage = AcceptAllCookiesStorage()
             }
         }
     }
