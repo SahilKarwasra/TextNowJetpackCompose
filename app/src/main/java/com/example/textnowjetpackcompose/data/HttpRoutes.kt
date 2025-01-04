@@ -5,4 +5,6 @@ object HttpRoutes {
     const val signup = "$BASE_URL/api/auth/signup"
     const val login = "$BASE_URL/api/auth/login"
     const val checkAuth = "$BASE_URL/api/auth/check"
+    const val logout = "$BASE_URL/api/auth/logout"
+    const val getUsers = "$BASE_URL/api/messages/users"
 }

@@ -1,7 +1,6 @@
 package com.example.textnowjetpackcompose.screens.auth
 
 import android.widget.Toast
-import androidx.activity.result.launch
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -21,16 +20,12 @@ import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SnackbarDuration
-import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -45,12 +40,11 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.textnowjetpackcompose.R
 import com.example.textnowjetpackcompose.data.model.LoginRequest
 import com.example.textnowjetpackcompose.navigation.DestinationScreen
 import com.example.textnowjetpackcompose.screens.auth.components.AuthTextField
-import kotlinx.coroutines.launch
+import com.example.textnowjetpackcompose.viewmodels.AuthViewModel
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
@@ -177,10 +171,10 @@ fun LoginScreen( navigate: (DestinationScreen) -> Unit,viewModel: AuthViewModel 
                 viewModel.errorMessage.value = null
             }
         }
-        if (viewModel.authUserResponse.value != null) {
-            LaunchedEffect(viewModel.authUserResponse.value) {
+        if (viewModel.userResponse.value != null) {
+            LaunchedEffect(viewModel.userResponse.value) {
                 Toast.makeText(context, "Login Successful", Toast.LENGTH_SHORT).show()
-                viewModel.authUserResponse.value = null
+                viewModel.userResponse.value = null
                 navigate(DestinationScreen.HomeScreenObj)
             }
         }

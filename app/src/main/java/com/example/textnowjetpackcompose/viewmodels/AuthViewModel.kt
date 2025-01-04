@@ -1,4 +1,4 @@
-package com.example.textnowjetpackcompose.screens.auth
+package com.example.textnowjetpackcompose.viewmodels
 
 import android.util.Log
 import androidx.compose.runtime.getValue
@@ -7,9 +7,11 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.textnowjetpackcompose.data.model.SignupRequest
-import com.example.textnowjetpackcompose.data.model.AuthUserResponse
+import com.example.textnowjetpackcompose.data.model.UserResponse
 import com.example.textnowjetpackcompose.data.model.LoginRequest
 import com.example.textnowjetpackcompose.data.repository.AuthRepository
+import io.ktor.client.call.body
+import io.ktor.http.isSuccess
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -19,10 +21,8 @@ class AuthViewModel (private val authRepository: AuthRepository) : ViewModel()  
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> get() = _isLoading
     val errorMessage = mutableStateOf<String?>(null)
-    val authUserResponse = mutableStateOf<AuthUserResponse?>(null)
+    val userResponse = mutableStateOf<UserResponse?>(null)
     var isAuthenticated by mutableStateOf(false)
-
-
 
     fun signup(signupRequest: SignupRequest) {
         viewModelScope.launch {
@@ -32,7 +32,7 @@ class AuthViewModel (private val authRepository: AuthRepository) : ViewModel()  
                 val result = authRepository.signup(signupRequest)
                 result.fold(
                     onSuccess = {
-                        authUserResponse.value = it
+                        userResponse.value = it
                     },
                     onFailure = {
                         errorMessage.value = it.message
@@ -59,7 +59,7 @@ class AuthViewModel (private val authRepository: AuthRepository) : ViewModel()  
                 val result = authRepository.login(loginRequest)
                 result.fold(
                     onSuccess = {
-                        authUserResponse.value = it
+                        userResponse.value = it
                     },
                     onFailure = {
                         errorMessage.value = it.message
@@ -75,7 +75,6 @@ class AuthViewModel (private val authRepository: AuthRepository) : ViewModel()  
         }
     }
 
-
     fun checkAuth() {
         errorMessage.value = null
         viewModelScope.launch {
@@ -85,7 +84,7 @@ class AuthViewModel (private val authRepository: AuthRepository) : ViewModel()  
                 val result = authRepository.checkAuth()
                 result.fold(
                     onSuccess = {
-                        authUserResponse.value = it
+                        userResponse.value = it
                         Log.d("CheckAuthViewModel", "checkAuth: User is authenticated")
                         isAuthenticated = true
                     },
@@ -97,6 +96,29 @@ class AuthViewModel (private val authRepository: AuthRepository) : ViewModel()  
             } catch (e: Exception) {
                 errorMessage.value = e.message ?:"An Unexpected message occurred during checkAuth"
                 Log.d("CheckAuth Catch", "checkAuth: Error ${e.message}")
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
+
+    fun logout() {
+        viewModelScope.launch {
+            _isLoading.value = true
+            errorMessage.value = null
+            try {
+                val response = authRepository.logout()
+                if (response.status.isSuccess()) {
+                    isAuthenticated = false
+                    Log.d("LogoutViewModel", "logout: User is logged out")
+                } else {
+                    val errorBody = response.body<String>()
+                    errorMessage.value = "Logout failed: ${response.status} - $errorBody"
+                    Log.e("LogoutViewModel", "logout: HTTP error: ${response.status}, body: $errorBody")
+                }
+            } catch (e: Exception) {
+                errorMessage.value = e.message ?: "An Unexpected message occurred during logout"
+                Log.e("LogoutViewModel", "logout: Error during logout", e)
             } finally {
                 _isLoading.value = false
             }

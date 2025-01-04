@@ -15,4 +15,10 @@ sealed class DestinationScreen{
 
     @Serializable
     data object HomeScreenObj : DestinationScreen()
+
+    @Serializable
+    data object StatusScreenObj : DestinationScreen()
+
+    @Serializable
+    data object ProfileScreenObj : DestinationScreen()
 }

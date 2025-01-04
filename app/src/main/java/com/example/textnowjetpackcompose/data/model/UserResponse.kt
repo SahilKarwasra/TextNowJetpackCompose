@@ -4,7 +4,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class AuthUserResponse(
+data class UserResponse(
     @SerialName("_id") val id: String,
     val fullName: String,
     val email: String,

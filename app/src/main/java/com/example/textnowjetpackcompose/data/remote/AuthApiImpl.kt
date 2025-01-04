@@ -6,7 +6,7 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.example.textnowjetpackcompose.data.HttpRoutes
-import com.example.textnowjetpackcompose.data.model.AuthUserResponse
+import com.example.textnowjetpackcompose.data.model.UserResponse
 import com.example.textnowjetpackcompose.data.model.LoginRequest
 import com.example.textnowjetpackcompose.data.model.SignupRequest
 import io.ktor.client.HttpClient
@@ -17,11 +17,10 @@ import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.HttpResponse
 import io.ktor.http.ContentType
-import io.ktor.http.Cookie
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
-import io.ktor.http.headers
+import io.ktor.http.isSuccess
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -36,7 +35,8 @@ class AuthApiImpl(
 
     private val authTokenKey = stringPreferencesKey("auth_token")
 
-    override suspend fun signup(request: SignupRequest): AuthUserResponse {
+
+    override suspend fun signup(request: SignupRequest): UserResponse {
 
         try {
             val response: HttpResponse = client.post(HttpRoutes.signup) {
@@ -77,9 +77,7 @@ class AuthApiImpl(
             throw e
         }
     }
-
-
-    override suspend fun login(request: LoginRequest): AuthUserResponse {
+    override suspend fun login(request: LoginRequest): UserResponse {
         try {
             val response: HttpResponse = client.post(HttpRoutes.login) {
                 contentType(ContentType.Application.Json)
@@ -123,7 +121,7 @@ class AuthApiImpl(
 
 
     private val TAG = "CheckAuth AuthApiImpl"
-    override suspend fun checkAuth(): AuthUserResponse {
+    override suspend fun checkAuth(): UserResponse {
         val token = dataStore.data.firstOrNull()?.get(authTokenKey)
         Log.d(TAG, "checkAuth: Token from dataStore: $token")
         val rawToken = token?.substringBefore(";")
@@ -149,5 +147,22 @@ class AuthApiImpl(
             throw e
         }
     }
-
+    override suspend fun logout(): HttpResponse {
+        try {
+            val response: HttpResponse = client.post(HttpRoutes.logout)
+            Log.d("Logout AuthApiImpl", "logout: Response status: ${response.status}")
+            if (!response.status.isSuccess()) {
+                val errorBody = response.body<String>()
+                Log.e("Logout AuthApiImpl", "logout: HTTP error: ${response.status}, body: $errorBody")
+                throw Exception("HTTP error: ${response.status}")
+            }
+            dataStore.updateData { settings ->
+                settings.toMutablePreferences().apply { remove(authTokenKey) }
+            }
+            return response
+        } catch (e: Exception) {
+            Log.e("Logout AuthApiImpl", "logout: Error during logout", e)
+            throw e
+        }
+    }
 }

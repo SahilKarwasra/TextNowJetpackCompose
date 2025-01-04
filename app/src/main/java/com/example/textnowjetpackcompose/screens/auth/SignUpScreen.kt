@@ -26,7 +26,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -37,7 +36,6 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
@@ -48,6 +46,7 @@ import com.example.textnowjetpackcompose.navigation.DestinationScreen
 import com.example.textnowjetpackcompose.screens.auth.components.AuthTextField
 import com.example.textnowjetpackcompose.screens.auth.components.ValidateSignupForm
 import com.example.textnowjetpackcompose.screens.auth.components.ValidationResult
+import com.example.textnowjetpackcompose.viewmodels.AuthViewModel
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
@@ -241,10 +240,10 @@ fun SignUpScreen(
                 viewModel.errorMessage.value = null
             }
         }
-        if (viewModel.authUserResponse.value != null) {
-            LaunchedEffect(viewModel.authUserResponse.value) {
+        if (viewModel.userResponse.value != null) {
+            LaunchedEffect(viewModel.userResponse.value) {
                 Toast.makeText(context, "Signup Successful", Toast.LENGTH_SHORT).show()
-                viewModel.authUserResponse.value = null
+                viewModel.userResponse.value = null
                 navigate(DestinationScreen.HomeScreenObj)
             }
         }
