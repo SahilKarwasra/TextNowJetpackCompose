@@ -21,4 +21,12 @@ sealed class DestinationScreen{
 
     @Serializable
     data object ProfileScreenObj : DestinationScreen()
+
+    @Serializable
+    data class ChatScreenObj(
+        val userId: String,
+        val userName: String
+    ) : DestinationScreen()
+
+
 }

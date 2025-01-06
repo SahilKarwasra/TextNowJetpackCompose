@@ -23,6 +23,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -73,6 +74,8 @@ fun LoginScreen( navigate: (DestinationScreen) -> Unit,viewModel: AuthViewModel 
 
         val focusManager = LocalFocusManager.current
         val context = LocalContext.current
+
+        val userResponse by viewModel.userResponse.collectAsState()
 
         Image(
             painter = painterResource(id = imageResource),
@@ -165,17 +168,17 @@ fun LoginScreen( navigate: (DestinationScreen) -> Unit,viewModel: AuthViewModel 
                 "Login"
             )
         }
-        if (viewModel.errorMessage.value != null) {
-            LaunchedEffect(viewModel.errorMessage.value) {
-                Toast.makeText(context, viewModel.errorMessage.value, Toast.LENGTH_SHORT).show()
-                viewModel.errorMessage.value = null
+        LaunchedEffect(userResponse) {
+            userResponse?.let {
+                Toast.makeText(context, "Login Successful", Toast.LENGTH_SHORT).show()
+                navigate(DestinationScreen.HomeScreenObj)
             }
         }
-        if (viewModel.userResponse.value != null) {
-            LaunchedEffect(viewModel.userResponse.value) {
-                Toast.makeText(context, "Login Successful", Toast.LENGTH_SHORT).show()
-                viewModel.userResponse.value = null
-                navigate(DestinationScreen.HomeScreenObj)
+
+        LaunchedEffect(viewModel.errorMessage.value) {
+            viewModel.errorMessage.value?.let { errorMessage ->
+                Toast.makeText(context, errorMessage, Toast.LENGTH_SHORT).show()
+                viewModel.errorMessage.value = null
             }
         }
         Spacer(modifier = Modifier.padding(bottom = 25.dp))

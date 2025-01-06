@@ -1,11 +1,13 @@
 package com.example.textnowjetpackcompose.screens.utils
 
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Chat
-import androidx.compose.material.icons.filled.DataUsage
-import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.outlined.DataUsage
+import androidx.compose.material.icons.outlined.Home
+import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -35,8 +37,9 @@ fun BottomNavigationBar(navigate: (DestinationScreen) -> Unit
     ) {
         items.forEach { item ->
             NavigationBarItem(
-                icon = { Icon(item.icon, contentDescription = item.title) },
-                selected = false, // You'll need to handle selection differently
+                icon = { Icon(item.icon, contentDescription = item.title,
+                    modifier = Modifier.size(30.dp)) },
+                selected = false,
                 onClick = {
                     navigate(item.screen)
                 },
@@ -56,9 +59,9 @@ fun BottomNavigationBar(navigate: (DestinationScreen) -> Unit
 
 sealed class BottomNavItem(val title: String, val icon: ImageVector, val screen: DestinationScreen) {
     object Chat : BottomNavItem("Chat",
-        Icons.AutoMirrored.Filled.Chat, DestinationScreen.HomeScreenObj)
+        Icons.Outlined.Home, DestinationScreen.HomeScreenObj)
     object Status : BottomNavItem("Status",
-        Icons.Filled.DataUsage, DestinationScreen.StatusScreenObj)
+        Icons.Outlined.DataUsage, DestinationScreen.StatusScreenObj)
     object Profile : BottomNavItem("Settings",
-        Icons.Filled.Person, DestinationScreen.ProfileScreenObj)
+        Icons.Outlined.Person, DestinationScreen.ProfileScreenObj)
 }

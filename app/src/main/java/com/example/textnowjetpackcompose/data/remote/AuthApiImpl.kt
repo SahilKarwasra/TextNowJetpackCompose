@@ -77,6 +77,8 @@ class AuthApiImpl(
             throw e
         }
     }
+
+
     override suspend fun login(request: LoginRequest): UserResponse {
         try {
             val response: HttpResponse = client.post(HttpRoutes.login) {

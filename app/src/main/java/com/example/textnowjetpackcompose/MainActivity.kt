@@ -12,6 +12,7 @@ import androidx.compose.ui.Modifier
 import com.example.textnowjetpackcompose.navigation.AppNavigation
 import com.example.textnowjetpackcompose.screens.auth.LoginScreen
 import com.example.textnowjetpackcompose.screens.auth.SignUpScreen
+import com.example.textnowjetpackcompose.screens.chats.ChatScreen
 import com.example.textnowjetpackcompose.ui.theme.TextNowJetpackComposeTheme
 
 class MainActivity : ComponentActivity() {

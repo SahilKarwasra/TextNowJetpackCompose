@@ -23,6 +23,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -70,18 +71,10 @@ fun SignUpScreen(
         var usernameError by remember { mutableStateOf<String?>(null) }
         var emailError by remember { mutableStateOf<String?>(null) }
         var passwordError by remember { mutableStateOf<String?>(null) }
-        var username by remember {
-            mutableStateOf("")
-        }
-        var email by remember {
-            mutableStateOf("")
-        }
-        var password by remember {
-            mutableStateOf("")
-        }
-        var showPassword by rememberSaveable {
-            mutableStateOf(false)
-        }
+        var username by remember { mutableStateOf("") }
+        var email by remember { mutableStateOf("") }
+        var password by remember { mutableStateOf("") }
+        var showPassword by rememberSaveable { mutableStateOf(false) }
         val context = LocalContext.current
 
 
@@ -91,7 +84,6 @@ fun SignUpScreen(
             if (usernameValidation is ValidationResult.Invalid) {
                 usernameValidation.message
             } else null
-
 
         val emailValidation = ValidateSignupForm.validateEmail(email)
         emailError =
@@ -103,6 +95,7 @@ fun SignUpScreen(
 
 
         val focusManager = LocalFocusManager.current
+        val userResponse by viewModel.userResponse.collectAsState()
 
 
         Image(
@@ -200,17 +193,15 @@ fun SignUpScreen(
 
         Button(
             onClick = {
-
                 val request = SignupRequest(
                     fullName = username,
                     email = email,
                     password = password
                 )
-
                 if (
-                    usernameValidation is ValidationResult.Valid
-                    && emailValidation is ValidationResult.Valid
-                    && passwordValidation is ValidationResult.Valid
+                    usernameValidation is ValidationResult.Valid &&
+                    emailValidation is ValidationResult.Valid &&
+                    passwordValidation is ValidationResult.Valid
                 ) {
                     viewModel.signup(request)
                 } else {
@@ -226,24 +217,24 @@ fun SignUpScreen(
             colors = ButtonColors(
                 containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
                 contentColor = MaterialTheme.colorScheme.onSurface,
-                disabledContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                disabledContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
                 disabledContentColor = MaterialTheme.colorScheme.onSurface
-            )
+            ),
+            enabled = usernameError == null && emailError == null && passwordError == null
         ) {
-            Text(
-                "SignUp"
-            )
+            Text("SignUp")
         }
-        if (viewModel.errorMessage.value != null) {
-            LaunchedEffect(viewModel.errorMessage.value) {
-                Toast.makeText(context, viewModel.errorMessage.value, Toast.LENGTH_SHORT).show()
+
+        viewModel.errorMessage.value?.let { apiError ->
+            LaunchedEffect(apiError) {
+                Toast.makeText(context, apiError, Toast.LENGTH_LONG).show()
                 viewModel.errorMessage.value = null
             }
         }
-        if (viewModel.userResponse.value != null) {
-            LaunchedEffect(viewModel.userResponse.value) {
+
+        LaunchedEffect(userResponse) {
+            if (userResponse != null) {
                 Toast.makeText(context, "Signup Successful", Toast.LENGTH_SHORT).show()
-                viewModel.userResponse.value = null
                 navigate(DestinationScreen.HomeScreenObj)
             }
         }
