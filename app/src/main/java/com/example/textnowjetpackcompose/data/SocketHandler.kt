@@ -17,7 +17,7 @@ object SocketHandler {
             e.printStackTrace()
         }
     }
-
+    
     @Synchronized
     fun getSocket(): Socket{
         return mSocket
