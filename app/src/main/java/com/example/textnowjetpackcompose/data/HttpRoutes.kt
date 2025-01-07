@@ -8,4 +8,5 @@ object HttpRoutes {
     const val logout = "$BASE_URL/api/auth/logout"
     const val getUsers = "$BASE_URL/api/messages/users"
     const val getMessages = "$BASE_URL/api/messages/"
+    const val sendMessages = "$BASE_URL/api/messages/send/"
 }

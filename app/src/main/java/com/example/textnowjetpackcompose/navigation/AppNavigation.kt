@@ -106,7 +106,7 @@ fun AppNavigation() {
                 val fullName = it.toRoute<DestinationScreen.ChatScreenObj>().userName
                 val userId = it.toRoute<DestinationScreen.ChatScreenObj>().userId
                 ChatScreen(
-                    userName = fullName,
+                    receiverName = fullName,
                     userId = userId,
                     navigateToHomeScreen = {
                         navController.navigate(it)

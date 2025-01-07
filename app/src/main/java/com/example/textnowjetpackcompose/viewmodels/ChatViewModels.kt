@@ -66,4 +66,17 @@ class ChatViewModels(
             _errorMessage.value = e.message ?: "An Unexpected message occurred"
         }
     }
+
+    suspend fun sendMessage(receiverId: String, messageModel: MessageModel) {
+        try {
+            val response = messageRepository.sendMessage(receiverId, messageModel)
+            if (response.status.value == 200) {
+                Log.d("ChatViewModel", "sendMessage: Message sent successfully")
+            } else {
+                Log.e("ChatViewModel", "sendMessage: Failed to send message")
+            }
+        } catch (e: Exception) {
+            Log.e("ChatViewModel", "sendMessage: Error sending message", e)
+        }
+    }
 }

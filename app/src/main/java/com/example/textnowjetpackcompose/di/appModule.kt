@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStore
+import com.example.textnowjetpackcompose.data.SocketHandler
 import com.example.textnowjetpackcompose.data.remote.AuthApi
 import com.example.textnowjetpackcompose.data.remote.AuthApiImpl
 import com.example.textnowjetpackcompose.data.remote.MessageApi
@@ -21,6 +22,7 @@ import io.ktor.client.plugins.cookies.AcceptAllCookiesStorage
 import io.ktor.client.plugins.cookies.HttpCookies
 import io.ktor.client.plugins.logging.LogLevel
 import io.ktor.client.plugins.logging.Logging
+import io.ktor.client.plugins.websocket.WebSockets
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
 import org.koin.androidx.viewmodel.dsl.viewModelOf
@@ -44,6 +46,7 @@ val appModule = module {
             install(HttpCookies) {
                 storage = AcceptAllCookiesStorage()
             }
+            install(WebSockets)
         }
     }
     single {
@@ -69,6 +72,6 @@ val appModule = module {
         MessageRepositoryImpl(messageApi) as MessageRepository
     }
     viewModelOf(::ChatViewModels)
-
+    single { SocketHandler }
 
 }

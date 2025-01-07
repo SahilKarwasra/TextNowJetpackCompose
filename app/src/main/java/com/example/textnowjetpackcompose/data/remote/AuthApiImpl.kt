@@ -11,6 +11,7 @@ import com.example.textnowjetpackcompose.data.model.LoginRequest
 import com.example.textnowjetpackcompose.data.model.SignupRequest
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
+import io.ktor.client.plugins.websocket.WebSockets
 import io.ktor.client.request.get
 import io.ktor.client.request.headers
 import io.ktor.client.request.post
@@ -21,6 +22,7 @@ import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -78,7 +80,6 @@ class AuthApiImpl(
         }
     }
 
-
     override suspend fun login(request: LoginRequest): UserResponse {
         try {
             val response: HttpResponse = client.post(HttpRoutes.login) {
@@ -121,7 +122,6 @@ class AuthApiImpl(
         }
     }
 
-
     private val TAG = "CheckAuth AuthApiImpl"
     override suspend fun checkAuth(): UserResponse {
         val token = dataStore.data.firstOrNull()?.get(authTokenKey)
@@ -149,6 +149,7 @@ class AuthApiImpl(
             throw e
         }
     }
+
     override suspend fun logout(): HttpResponse {
         try {
             val response: HttpResponse = client.post(HttpRoutes.logout)
@@ -167,4 +168,8 @@ class AuthApiImpl(
             throw e
         }
     }
+
+
+
+
 }

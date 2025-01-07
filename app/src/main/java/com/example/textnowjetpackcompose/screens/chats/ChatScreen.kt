@@ -1,9 +1,11 @@
 package com.example.textnowjetpackcompose.screens.chats
 
+import android.annotation.SuppressLint
 import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -30,11 +32,16 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -46,15 +53,16 @@ import coil3.compose.AsyncImage
 import com.example.textnowjetpackcompose.data.model.MessageModel
 import com.example.textnowjetpackcompose.navigation.DestinationScreen
 import com.example.textnowjetpackcompose.screens.utils.PreferenceManager
-import com.example.textnowjetpackcompose.viewmodels.AuthViewModel
 import com.example.textnowjetpackcompose.viewmodels.ChatViewModels
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.koin.androidx.compose.koinViewModel
 
+@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChatScreen(
-    userName: String,
+    receiverName: String,
     navigateToHomeScreen: (DestinationScreen) -> Unit,
     userId: String,
     viewModels: ChatViewModels = koinViewModel()
@@ -62,28 +70,33 @@ fun ChatScreen(
 
     val messages = viewModels.messageText.collectAsState(initial = emptyList()).value
 
-    runBlocking {
+    LaunchedEffect(Unit) {
         viewModels.getMessages(userId)
         Log.d("ChatScreen", "ChatScreen: ${viewModels.messageText.value}")
     }
+    val preferenceManager = PreferenceManager(context = LocalContext.current)
+    val senderId = preferenceManager.getUser()
+    val scope = rememberCoroutineScope()
+    val topAppBarScrollBehavior =
+        TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
+
 
     Scaffold(
         topBar = {
             TopAppBar(
                 title = {
                     Text(
-                        userName,
+                        receiverName,
                         style = MaterialTheme.typography.displaySmall,
                         modifier = Modifier.fillMaxWidth(),
                         textAlign = TextAlign.Center
                     )
                 },
+                scrollBehavior = topAppBarScrollBehavior,
                 navigationIcon = {
-                    IconButton(
-                        onClick = {
-                            navigateToHomeScreen(DestinationScreen.HomeScreenObj)
-                        }
-                    ) {
+                    IconButton(onClick = {
+                        navigateToHomeScreen(DestinationScreen.HomeScreenObj)
+                    }) {
                         Icon(
                             Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Back",
@@ -92,40 +105,44 @@ fun ChatScreen(
                         )
                     }
                 },
-                windowInsets = WindowInsets.ime,
             )
         },
-        bottomBar = {
-            SendMessageTextField(
+    ) {  _ ->
+
+        Box(
+            modifier = Modifier.fillMaxSize()
+        ) {
+            ChatMessagesContainer(
                 modifier = Modifier
-                    .padding(16.dp)
+                    .fillMaxSize(), messages = messages
+            )
+            SendMessageTextField(
+                modifier = Modifier.padding(16.dp)
+                    .align(Alignment.BottomStart),
+                onSendMessage = { messageText ->
+                    scope.launch {
+                        val currentTime = System.currentTimeMillis().toString()
+                        val message = MessageModel(
+                            text = messageText,
+                            senderId = "$senderId",
+                            receiverId = userId,
+                            createdAt = currentTime,
+                            updatedAt = "",
+                            image = ""
+                        )
+                        viewModels.sendMessage(userId, message)
+                    }
+                }
             )
         }
-    ) { innerPadding ->
-        ChatMessagesContainer(
-            modifier = Modifier
-                .padding(innerPadding)
-                .fillMaxSize(),
-            messages = messages
-        )
-
     }
 
 }
 
 @Composable
 fun ChatMessagesContainer(
-    messages: List<MessageModel>,
-    modifier: Modifier = Modifier) {
-//    val dummyMessages = remember {
-//        listOf(
-//            MessageItem("Hi there!  ", "10:00 AM", isSentByMe = true),
-//            MessageItem("Hello! How are you?", "10:01 AM", isSentByMe = false),
-//            MessageItem("I'm doing great, thanks!", "10:02 AM", isSentByMe = true),
-//            MessageItem("That's awesome to hear!", "10:03 AM", isSentByMe = false)
-//        )
-//    }
-
+    messages: List<MessageModel>, modifier: Modifier = Modifier
+) {
     LazyColumn(
         modifier = modifier.padding(horizontal = 8.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -137,10 +154,9 @@ fun ChatMessagesContainer(
 }
 
 @Composable
-fun ChatBubble(message: MessageModel, ) {
+fun ChatBubble(message: MessageModel) {
 
     val preferenceManager = PreferenceManager(context = LocalContext.current)
-
     val userResponse = preferenceManager.getUser()
     Log.d("ChatBubble", "ChatBubble: ${userResponse?.id}")
     val sentByMe = message.senderId == userResponse?.id
@@ -161,19 +177,13 @@ fun ChatBubble(message: MessageModel, ) {
                     else {
                         if (sentByMe) MaterialTheme.colorScheme.inverseOnSurface
                         else MaterialTheme.colorScheme.primaryContainer
-                    },
-                    shape = if (sentByMe) RoundedCornerShape(
-                        topStart = 24.dp,
-                        topEnd = 24.dp,
-                        bottomStart = 24.dp
+                    }, shape = if (sentByMe) RoundedCornerShape(
+                        topStart = 24.dp, topEnd = 24.dp, bottomStart = 24.dp
                     ) else RoundedCornerShape(
-                        topStart = 24.dp,
-                        topEnd = 24.dp,
-                        bottomEnd = 24.dp
+                        topStart = 24.dp, topEnd = 24.dp, bottomEnd = 24.dp
                     )
                 )
-                .padding(12.dp),
-            horizontalAlignment = Alignment.Start
+                .padding(12.dp), horizontalAlignment = Alignment.Start
         ) {
             message.text?.let {
                 Text(
@@ -187,13 +197,11 @@ fun ChatBubble(message: MessageModel, ) {
                     model = it,
                     contentDescription = "",
                     modifier = Modifier.size(150.dp),
-                    )
+                )
             }
             message.createdAt?.let {
                 Text(
-                    text = it,
-                    fontSize = 10.sp,
-                    textAlign = TextAlign.End
+                    text = it, fontSize = 10.sp, textAlign = TextAlign.End
                 )
             }
         }
@@ -203,34 +211,41 @@ fun ChatBubble(message: MessageModel, ) {
 
 
 @Composable
-fun SendMessageTextField(modifier: Modifier = Modifier) {
+fun SendMessageTextField(
+    modifier: Modifier = Modifier,
+    onSendMessage: (String) -> Unit
+) {
     Surface(
-        modifier = Modifier.padding(horizontal = 20.dp)
+        modifier = modifier.padding(horizontal = 20.dp)
     ) {
-        TextField(
-            value = "",
-            onValueChange = {},
-            placeholder = {
-                Text(text = "Search")
-            },
-            shape = RoundedCornerShape(20.dp),
-            colors = TextFieldDefaults.colors(
-                focusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
-                unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-                focusedIndicatorColor = Color.Transparent,
-                unfocusedIndicatorColor = Color.Transparent,
-                errorContainerColor = MaterialTheme.colorScheme.surfaceContainer
-            ),
-            modifier = Modifier
-                .fillMaxWidth(),
-            trailingIcon = {
-                IconButton(onClick = {
-//                    TODO
-                }) {
-                    Icon(Icons.AutoMirrored.Outlined.Send, contentDescription = "")
+        var message by remember {
+            mutableStateOf("")
+        }
+
+        TextField(value = message, onValueChange = {
+            message = it
+        }, placeholder = {
+            Text(text = "Send")
+        }, shape = RoundedCornerShape(20.dp), colors = TextFieldDefaults.colors(
+            focusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
+            unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+            focusedIndicatorColor = Color.Transparent,
+            unfocusedIndicatorColor = Color.Transparent,
+            errorContainerColor = MaterialTheme.colorScheme.surfaceContainer
+        ), modifier = Modifier.fillMaxWidth(), trailingIcon = {
+            IconButton(onClick = {
+                if (message.isNotEmpty()) {
+                    try {
+                        onSendMessage(message)
+                        message = ""
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
                 }
+            }) {
+                Icon(Icons.AutoMirrored.Outlined.Send, contentDescription = "")
             }
-        )
+        })
     }
 }
 

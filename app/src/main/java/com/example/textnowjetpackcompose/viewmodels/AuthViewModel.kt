@@ -7,6 +7,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.textnowjetpackcompose.data.SocketHandler
 import com.example.textnowjetpackcompose.data.model.SignupRequest
 import com.example.textnowjetpackcompose.data.model.UserResponse
 import com.example.textnowjetpackcompose.data.model.LoginRequest
@@ -36,30 +37,24 @@ class AuthViewModel(
     fun signup(signupRequest: SignupRequest) {
         viewModelScope.launch {
             _isLoading.value = true
-            errorMessage.value = null
             try {
                 val result = authRepository.signup(signupRequest)
                 result.fold(
                     onSuccess = {
                         _userResponse.value = it
+                        preferenceManager.saveUser(it)
+                        connectSocket(it.id)
+                        isAuthenticated = true
                     },
-                    onFailure = {
-                        errorMessage.value = it.message
-                        Log.d("Signup Failure", "signup: Error ${it.message}")
+                    onFailure = { error ->
+                        Log.d("Signup Error", error.message ?: "Unknown error")
                     }
                 )
-            } catch (
-                e: Exception
-            ) {
-                errorMessage.value = e.message ?:"An Unexpected message occurred during signup"
-                Log.d("Signup Catch", "signup: Error ${e.message}")
             } finally {
                 _isLoading.value = false
             }
-
         }
     }
-
 
     fun login(loginRequest: LoginRequest) {
         viewModelScope.launch {
@@ -70,6 +65,7 @@ class AuthViewModel(
                 result.fold(
                     onSuccess = {
                         _userResponse.value = it
+                        connectSocket(it.id)
                     },
                     onFailure = {
                         errorMessage.value = it.message
@@ -86,38 +82,30 @@ class AuthViewModel(
     }
 
     fun checkAuth() {
-        errorMessage.value = null
         viewModelScope.launch {
-            if (preferenceManager.getUser() != null) {
-                isAuthenticated = true
-                _isLoading.value = false
-            } else {
-                _isLoading.value = true
-                errorMessage.value = null
-                try {
+            _isLoading.value = true
+            try {
+                val user = preferenceManager.getUser()
+                if (user != null) {
+                    _userResponse.value = user
+                    connectSocket(user.id)
+                    isAuthenticated = true
+                } else {
                     val result = authRepository.checkAuth()
                     result.fold(
                         onSuccess = {
                             _userResponse.value = it
                             preferenceManager.saveUser(it)
-                            Log.d("CheckAuth Success", "checkAuth: User is authenticated ${it.id}")
+                            connectSocket(it.id)
                             isAuthenticated = true
                         },
-                        onFailure = {
-                            errorMessage.value = it.message
-                            Log.d("CheckAuth Failure", "checkAuth: Error ${it.message}")
+                        onFailure = { error ->
+                            Log.d("CheckAuth Error", error.message ?: "Unknown error")
                         }
                     )
-                } catch (e: Exception) {
-                    errorMessage.value = e.message ?: "An Unexpected message occurred during checkAuth"
-                    Log.d("CheckAuth Catch", "checkAuth: Error ${e.message}")
-                } finally {
-                    _isLoading.value = false
-                    Log.d(
-                        "CheckAuth Success finally",
-                        "checkAuth: User is authenticated ${_userResponse.value?.id}"
-                    )
                 }
+            } finally {
+                _isLoading.value = false
             }
         }
     }
@@ -130,6 +118,7 @@ class AuthViewModel(
                 val response = authRepository.logout()
                 if (response.status.isSuccess()) {
                     isAuthenticated = false
+                    disconnectSocket()
                     Log.d("LogoutViewModel", "logout: User is logged out")
                 } else {
                     val errorBody = response.body<String>()
@@ -147,4 +136,16 @@ class AuthViewModel(
             }
         }
     }
+
+    private fun connectSocket(userId: String) {
+        SocketHandler.setSocket(userId)
+        SocketHandler.establishConnection()
+        Log.d("WebSocket", "Connected with userId: $userId")
+    }
+
+    private fun disconnectSocket() {
+        SocketHandler.closeConnection()
+        Log.d("WebSocket", "Disconnected")
+    }
+
 }

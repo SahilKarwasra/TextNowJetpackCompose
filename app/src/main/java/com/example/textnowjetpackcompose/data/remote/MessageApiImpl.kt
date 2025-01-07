@@ -11,10 +11,14 @@ import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.get
 import io.ktor.client.request.headers
+import io.ktor.client.request.post
+import io.ktor.client.request.setBody
 import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsText
+import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
+import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 import kotlinx.coroutines.flow.firstOrNull
 import java.io.IOException
@@ -46,7 +50,6 @@ class MessageApiImpl(
         return response.body<List<UserResponse>>()
     }
 
-
     override suspend fun getMessages(receiverId: String): List<MessageModel> {
         val token = dataStore.data.firstOrNull()?.get(authTokenKey)
         val rawToken = token?.substringBefore(";")
@@ -66,6 +69,27 @@ class MessageApiImpl(
             }
         } catch (e: Exception) {
             Log.e("getMessages", "Error fetching messages: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun sendMessage(
+        receiverId: String,
+        messageModel: MessageModel
+    ): HttpResponse {
+        val token = dataStore.data.firstOrNull()?.get(authTokenKey)
+        val rawToken = token?.substringBefore(";")
+        try {
+            val response = client.post("${HttpRoutes.sendMessages}$receiverId") {
+                headers {
+                    append(HttpHeaders.Cookie, "$rawToken")
+                }
+                contentType(ContentType.Application.Json)
+                setBody(messageModel)
+            }
+            return response
+        } catch (e: Exception) {
+            Log.e("sendMessage", "Error sending message: ${e.message}")
             throw e
         }
     }
