@@ -67,6 +67,7 @@ class ChatViewModels(
         }
     }
 
+
     suspend fun sendMessage(receiverId: String, messageModel: MessageModel) {
         try {
             val response = messageRepository.sendMessage(receiverId, messageModel)
