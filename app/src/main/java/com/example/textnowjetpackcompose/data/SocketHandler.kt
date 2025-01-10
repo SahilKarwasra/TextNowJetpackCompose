@@ -1,5 +1,6 @@
 package com.example.textnowjetpackcompose.data
 
+import android.util.Log
 import io.socket.client.Socket
 import io.socket.client.IO
 import java.net.URISyntaxException
@@ -26,6 +27,8 @@ object SocketHandler {
     @Synchronized
     fun establishConnection() {
         mSocket.connect()
+        Log.d("WebSocket", "Socket URL: ${mSocket.id()}, Connected: ${mSocket.connected()}")
+
     }
 
     @Synchronized

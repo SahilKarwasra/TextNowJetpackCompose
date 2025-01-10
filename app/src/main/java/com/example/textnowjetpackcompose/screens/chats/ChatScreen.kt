@@ -35,6 +35,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -79,6 +80,20 @@ fun ChatScreen(
     val scope = rememberCoroutineScope()
     val topAppBarScrollBehavior =
         TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
+
+
+    // Initialize socket on launch
+    LaunchedEffect(Unit) {
+        viewModels.initializeSocket(senderId?.id ?: "")
+        viewModels.getMessages(userId)
+    }
+
+    // Disconnect socket when leaving screen
+    DisposableEffect(Unit) {
+        onDispose {
+            viewModels.disconnectSocket()
+        }
+    }
 
 
     Scaffold(
@@ -147,6 +162,7 @@ fun ChatMessagesContainer(
         modifier = modifier.padding(horizontal = 8.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
+        Log.d("Messages", "Current messages: $messages")
         items(messages) { message -> // Use messages list
             ChatBubble(message)
         }
@@ -242,7 +258,8 @@ fun SendMessageTextField(
                         e.printStackTrace()
                     }
                 }
-            }) {
+
+            },enabled = message.isNotBlank()) {
                 Icon(Icons.AutoMirrored.Outlined.Send, contentDescription = "")
             }
         })
