@@ -12,8 +12,11 @@ import com.example.textnowjetpackcompose.data.repository.MessageRepository
 import io.socket.client.Socket
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
@@ -22,18 +25,16 @@ class ChatViewModels(
     private val messageRepository: MessageRepository
 ) : ViewModel() {
 
-    private val _isLoading = MutableStateFlow(false)
-    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
-
-    private val _users = MutableStateFlow<List<UserResponse>>(emptyList())
-    val Users: StateFlow<List<UserResponse>> get() = _users
-
-    private val _errorMessage = MutableStateFlow<String?>(null)
-    val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
-
 
     private val _messageText = MutableStateFlow<List<MessageModel>>(emptyList())
-    val messageText: StateFlow<List<MessageModel>> = _messageText.asStateFlow()
+    private val messageText: StateFlow<List<MessageModel>> = _messageText.asStateFlow()
+
+    private val _chatState = MutableStateFlow(ChatState())
+    val chatState = _chatState.combine(messageText) { state, messages ->
+        state.copy(
+            messages = messages
+        )
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), ChatState())
 
     private lateinit var socket: Socket
 
@@ -56,63 +57,80 @@ class ChatViewModels(
                     createdAt = data.getString("createdAt"),
                     updatedAt = data.optString("updatedAt", "")
                 )
-                viewModelScope.launch {
-                    withContext(Dispatchers.Main) {
-                        Log.d("WebSocket", "Adding message: $newMessage")
-                        _messageText.value = _messageText.value + newMessage
-                    }
-                }
+
+                Log.d("WebSocket", "Adding message: $newMessage")
+                _messageText.value += newMessage
+
             }
         }
     }
+
     fun disconnectSocket() {
+        socket.off("newMessage")
         SocketHandler.closeConnection()
     }
 
 
     suspend fun getUsers() {
-        _isLoading.value = true
-        _errorMessage.value = null
+        _chatState.value = _chatState.value.copy(
+            errorMessage = null,
+            isLoading = true
+        )
         try {
             val result = messageRepository.getUsers()
             result.fold(
                 onSuccess = {
-                    _users.value = it
-                    Log.d("ChatViewModel", "getUsers: Success ${Users.value}")
-                    _isLoading.value = false
+                    _chatState.value = _chatState.value.copy(
+                        users = it,
+                        isLoading = false
+                    )
+
                 },
                 onFailure = {
-                    _errorMessage.value = it.message
+                    _chatState.value = _chatState.value.copy(
+                        errorMessage = it.message
+                    )
                 }
             )
         } catch (e: Exception) {
-            _errorMessage.value = e.message ?: "An Unexpected message occurred"
+            _chatState.value = _chatState.value.copy(
+                errorMessage = e.message
+            )
         }
     }
 
     suspend fun getMessages(receiverId: String) {
-        _isLoading.value = true
-        _errorMessage.value = null
+        _chatState.value = _chatState.value.copy(
+            errorMessage = null,
+            isLoading = true
+        )
         try {
 
             val result = messageRepository.getMessages(receiverId)
             result.fold(
                 onSuccess = {
-                    _messageText.value = it
-                    _isLoading.value = false
+                    _chatState.value = _chatState.value.copy(
+                        messages = it,
+                        isLoading = false
+                    )
                     Log.d("ChatViewModel", "getMessages: Success ${messageText.value}")
                 },
                 onFailure = {
-                    _errorMessage.value = it.message
+                    _chatState.value = _chatState.value.copy(
+                        errorMessage = it.message
+                    )
                 }
             )
         } catch (e: Exception) {
-            _errorMessage.value = e.message ?: "An Unexpected message occurred"
+            _chatState.value = _chatState.value.copy(
+                errorMessage = e.message
+            )
         }
     }
 
     suspend fun sendMessage(receiverId: String, messageModel: MessageModel) {
         try {
+            _messageText.value = _messageText.value.plus(messageModel)
             val response = messageRepository.sendMessage(receiverId, messageModel)
             if (response.status.value == 200 || response.status.value == 201) {
                 Log.d("ChatViewModel", "sendMessage: Message sent successfully")
@@ -122,5 +140,10 @@ class ChatViewModels(
         } catch (e: Exception) {
             Log.e("ChatViewModel", "sendMessage: Error sending message", e)
         }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        disconnectSocket()
     }
 }

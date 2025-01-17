@@ -136,20 +136,16 @@ fun UsersList( navigate: (DestinationScreen) -> Unit) {
 
     val viewModel: ChatViewModels = koinViewModel()
 
-    val users by viewModel.Users.collectAsState()
-    val isLoading by viewModel.isLoading.collectAsState()
-    val errorMessage by viewModel.errorMessage.collectAsState()
-    val messageText by viewModel.messageText.collectAsState()
-
+    val state by viewModel.chatState.collectAsState()
 
 
 
     when{
-        isLoading -> {
+        state.isLoading -> {
             CircularProgressIndicator()
         }
-        errorMessage != null -> {
-            Text(text = errorMessage ?: "Unknown Error")
+        state.errorMessage != null -> {
+            Text(text = state.errorMessage ?: "Unknown Error")
         }
         else -> {
             LazyColumn(
@@ -161,8 +157,7 @@ fun UsersList( navigate: (DestinationScreen) -> Unit) {
                 item {
                     Spacer(modifier = Modifier.padding(top = 13.dp))
                 }
-//        Log.d("ChatList", "ChatList: ${users}")
-                items(users) { user ->
+                items(state.users) { user ->
                     UsersBox(
                         profilePicUrl = user.profilePic,
                         name = user.fullName,

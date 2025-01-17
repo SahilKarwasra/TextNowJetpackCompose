@@ -8,6 +8,6 @@ data class MessageModel(
     val receiverId: String,
     val text: String? = null,
     val image: String? = null,
-    val createdAt: String? = null,
+    val createdAt: String,
     val updatedAt: String? = null
 )

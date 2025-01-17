@@ -30,13 +30,6 @@ fun HomeScreen(
         viewModel.getUsers()
 
     }
-    val messageText by viewModel.messageText.collectAsState()
-
-    LaunchedEffect(messageText) {
-        messageText.forEach { message ->
-            Log.d("ChatScreen", "Message: Sender=${message.senderId}, Text=${message.text}")
-        }
-    }
 
     Column(
         modifier = Modifier

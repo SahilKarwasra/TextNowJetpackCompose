@@ -1,8 +1,8 @@
 package com.example.textnowjetpackcompose.data
 
 import android.util.Log
-import io.socket.client.Socket
 import io.socket.client.IO
+import io.socket.client.Socket
 import java.net.URISyntaxException
 
 object SocketHandler {
@@ -11,28 +11,37 @@ object SocketHandler {
     @Synchronized
     fun setSocket(userId: String) {
         try {
-            val options = IO.Options()
-            options.query = "userId=$userId"
-            mSocket = IO.socket("http://10.0.2.2:5001", options)
+            val options = IO.Options().apply {
+                query = "userId=$userId"
+                reconnection = true
+            }
+            mSocket = IO.socket("https://textnowbackend.onrender.com", options)
         } catch (e: URISyntaxException) {
             e.printStackTrace()
         }
     }
 
     @Synchronized
-    fun getSocket(): Socket{
-        return mSocket
-    }
+    fun getSocket(): Socket = mSocket
 
     @Synchronized
     fun establishConnection() {
         mSocket.connect()
         Log.d("WebSocket", "Socket URL: ${mSocket.id()}, Connected: ${mSocket.connected()}")
-
     }
 
     @Synchronized
     fun closeConnection() {
         mSocket.disconnect()
+    }
+
+    fun onEvent(event: String, callback: (args: Array<Any>) -> Unit) {
+        mSocket.on(event) { args ->
+            callback(args)
+        }
+    }
+
+    fun emitEvent(event: String, data: Any) {
+        mSocket.emit(event, data)
     }
 }
