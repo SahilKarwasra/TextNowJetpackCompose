@@ -5,7 +5,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -44,7 +46,13 @@ fun ChatScreen(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val topAppBarScrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
+    val listState = rememberLazyListState()
 
+    LaunchedEffect(chatState.messages.size) {
+        if (chatState.messages.isNotEmpty()) {
+            listState.animateScrollToItem(chatState.messages.size - 1)
+        }
+    }
     // Initialize socket on launch
     LaunchedEffect(Unit) {
         viewModels.initializeSocket(senderId?.id ?: "")
@@ -101,7 +109,8 @@ fun ChatScreen(
                             viewModels.sendMessage(userId, message)
                         } catch (e: Exception) {
                             e.printStackTrace()
-                            Toast.makeText(context, "Failed to send message", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, "Failed to send message", Toast.LENGTH_SHORT)
+                                .show()
                         }
                     }
                 }
@@ -114,23 +123,27 @@ fun ChatScreen(
                 .fillMaxSize(),
             messages = {
                 chatState.messages
-            }
+            },
+            listState = listState
         )
     }
 }
 
 @Composable
 fun ChatMessagesContainer(
-    messages: () -> List<MessageModel>, modifier: Modifier = Modifier
+    messages: () -> List<MessageModel>,
+    modifier: Modifier = Modifier,
+    listState: LazyListState,
 ) {
-    val messagesList by remember{
+    val messagesList by remember {
         derivedStateOf { messages() }
     }
     LazyColumn(
         modifier = modifier.padding(horizontal = 8.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+        state = listState
     ) {
-        items(messagesList, key = { message -> message.createdAt}) { message ->
+        items(messagesList) { message ->
             ChatBubble(message)
         }
     }

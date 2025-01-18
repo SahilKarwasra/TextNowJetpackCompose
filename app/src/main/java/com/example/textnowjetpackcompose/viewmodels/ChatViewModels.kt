@@ -36,7 +36,7 @@ class ChatViewModels(
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), ChatState())
 
-    private lateinit var socket: Socket
+    private var socket: Socket? = null
 
     fun initializeSocket(userId: String) {
 
@@ -45,7 +45,7 @@ class ChatViewModels(
         SocketHandler.establishConnection()
 
         // Listen for new messages
-        socket.on("newMessage") { args ->
+        socket?.on("newMessage") { args ->
             if (args.isNotEmpty()) {
                 Log.d("WebSocket", "New message event received: $args")
                 val data = args[0] as JSONObject
@@ -66,7 +66,7 @@ class ChatViewModels(
     }
 
     fun disconnectSocket() {
-        socket.off("newMessage")
+        socket?.off("newMessage")
         SocketHandler.closeConnection()
     }
 
@@ -109,11 +109,11 @@ class ChatViewModels(
             val result = messageRepository.getMessages(receiverId)
             result.fold(
                 onSuccess = {
+                    _messageText.value = it
                     _chatState.value = _chatState.value.copy(
-                        messages = it,
                         isLoading = false
                     )
-                    Log.d("ChatViewModel", "getMessages: Success ${messageText.value}")
+                    Log.d("ChatViewModel", "getMessages: Success ${it}")
                 },
                 onFailure = {
                     _chatState.value = _chatState.value.copy(

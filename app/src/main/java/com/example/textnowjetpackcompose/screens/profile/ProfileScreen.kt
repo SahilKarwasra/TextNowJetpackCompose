@@ -31,7 +31,5 @@ fun ProfileScreen(viewModel: AuthViewModel = koinViewModel(), navigate: (Destina
         }) {
             Text("Logout")
         }
-
-
     }
 }

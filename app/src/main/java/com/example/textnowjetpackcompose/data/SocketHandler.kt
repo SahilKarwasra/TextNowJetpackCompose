@@ -35,13 +35,4 @@ object SocketHandler {
         mSocket.disconnect()
     }
 
-    fun onEvent(event: String, callback: (args: Array<Any>) -> Unit) {
-        mSocket.on(event) { args ->
-            callback(args)
-        }
-    }
-
-    fun emitEvent(event: String, data: Any) {
-        mSocket.emit(event, data)
-    }
 }
