@@ -30,4 +30,11 @@ class PreferenceManager(context: Context) {
             null
         }
     }
+
+    fun deleteUser() {
+        sharedPreferences.edit().putString(USER_ID, null).apply()
+        sharedPreferences.edit().putString(USER_NAME, null).apply()
+        sharedPreferences.edit().putString(USER_EMAIL, null).apply()
+        sharedPreferences.edit().putString(USER_PROFILE_PIC, null).apply()
+    }
 }

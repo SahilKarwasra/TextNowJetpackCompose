@@ -117,6 +117,8 @@ class AuthViewModel(
             try {
                 val response = authRepository.logout()
                 if (response.status.isSuccess()) {
+                    _userResponse.value = null
+                    preferenceManager.deleteUser()
                     isAuthenticated = false
                     disconnectSocket()
                     Log.d("LogoutViewModel", "logout: User is logged out")

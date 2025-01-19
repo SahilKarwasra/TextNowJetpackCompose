@@ -1,7 +1,13 @@
 package com.example.textnowjetpackcompose.screens.chats
 
+import android.view.ViewTreeObserver
 import android.widget.Toast
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.VisibilityThreshold
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -18,7 +24,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
@@ -53,6 +61,7 @@ fun ChatScreen(
             listState.animateScrollToItem(chatState.messages.size - 1)
         }
     }
+
     // Initialize socket on launch
     LaunchedEffect(Unit) {
         viewModels.initializeSocket(senderId?.id ?: "")
@@ -66,8 +75,11 @@ fun ChatScreen(
         }
     }
 
+
+
     Scaffold(
-        modifier = Modifier.imePadding(),
+        modifier = Modifier.imePadding() // Adjusts for keyboard automatically
+            .consumeWindowInsets(WindowInsets.ime),
         topBar = {
             TopAppBar(
                 title = {
@@ -103,7 +115,7 @@ fun ChatScreen(
                             receiverId = userId,
                             createdAt = currentTime,
                             updatedAt = "",
-                            image = ""
+                            image = null
                         )
                         try {
                             viewModels.sendMessage(userId, message)
@@ -139,45 +151,56 @@ fun ChatMessagesContainer(
         derivedStateOf { messages() }
     }
     LazyColumn(
-        modifier = modifier.padding(horizontal = 8.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
+        modifier = modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+            .windowInsetsPadding(WindowInsets.ime),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
         state = listState
     ) {
-        items(messagesList) { message ->
-            ChatBubble(message)
+        items(messagesList, key = { message -> message.createdAt }) { message ->
+            ChatBubble(message, Modifier.animateItem(
+                placementSpec = tween(
+                    3000
+                ),
+                fadeInSpec = null,
+                fadeOutSpec = null
+            ))
         }
     }
 }
 
 @Composable
-fun ChatBubble(message: MessageModel) {
+fun ChatBubble(message: MessageModel,modifier: Modifier = Modifier) {
     val preferenceManager = PreferenceManager(LocalContext.current)
     val userResponse = preferenceManager.getUser()
     val sentByMe = message.senderId == userResponse?.id
 
     Row(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
-            .padding(8.dp),
+            .padding(horizontal = 8.dp),
         horizontalArrangement = if (sentByMe) Arrangement.End else Arrangement.Start,
         verticalAlignment = Alignment.Bottom
     ) {
         Column(
             modifier = Modifier
-                .padding(8.dp)
+                .padding(4.dp)
                 .background(
-                    color = if (sentByMe) MaterialTheme.colorScheme.primary.copy(alpha = 0.8f)
-                    else MaterialTheme.colorScheme.secondary.copy(alpha = 0.8f),
+                    color = if (sentByMe) MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.8f)
+                    else MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.8f),
                     shape = if (sentByMe) RoundedCornerShape(
-                        topStart = 24.dp, topEnd = 24.dp, bottomStart = 24.dp
+                        topStart = 14.dp, topEnd = 14.dp, bottomStart = 14.dp
                     ) else RoundedCornerShape(
-                        topStart = 24.dp, topEnd = 24.dp, bottomEnd = 24.dp
+                        topStart = 14.dp, topEnd = 14.dp, bottomEnd = 14.dp
                     )
                 )
-                .padding(12.dp)
+                .padding(7.dp)
         ) {
             message.text?.let {
-                Text(text = it, style = MaterialTheme.typography.titleLarge)
+                Text(
+                    text = it,
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.onSurface.copy(0.8f)
+                )
             }
             Spacer(modifier = Modifier.height(4.dp))
             message.image?.let {
@@ -225,7 +248,7 @@ fun SendMessageTextField(
                 IconButton(
                     onClick = {
                         if (message.isNotBlank()) {
-                            onSendMessage(message)
+                            onSendMessage(message.trimEnd())
                             message = ""
                         }
                     },
@@ -237,3 +260,4 @@ fun SendMessageTextField(
         )
     }
 }
+

@@ -19,6 +19,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.json.Json
 import org.json.JSONObject
 
 class ChatViewModels(
@@ -48,18 +49,25 @@ class ChatViewModels(
         socket?.on("newMessage") { args ->
             if (args.isNotEmpty()) {
                 Log.d("WebSocket", "New message event received: $args")
-                val data = args[0] as JSONObject
-                val newMessage = MessageModel(
-                    senderId = data.getString("senderId"),
-                    receiverId = data.getString("receiverId"),
-                    text = data.optString("text", ""),
-                    image = data.optString("image"),
-                    createdAt = data.getString("createdAt"),
-                    updatedAt = data.optString("updatedAt", "")
-                )
-
-                Log.d("WebSocket", "Adding message: $newMessage")
-                _messageText.value += newMessage
+//                val data = args[0] as JSONObject
+//                val newMessage = MessageModel(
+//                    senderId = data.getString("senderId"),
+//                    receiverId = data.getString("receiverId"),
+//                    text = data.optString("text", ""),
+//                    image = data.optString("image"),
+//                    createdAt = data.getString("createdAt"),
+//                    updatedAt = data.optString("updatedAt", "")
+//                )
+                val data = args[0].toString()
+                val json = Json {
+                    ignoreUnknownKeys = true
+                }
+                val newMessage = json.decodeFromString<MessageModel>(data)
+                viewModelScope.launch {
+                    _messageText.value = _messageText.value.plus(newMessage)
+                }
+//                Log.d("WebSocket", "Adding message: $newMessage")
+//                _messageText.value += newMessage
 
             }
         }
