@@ -1,7 +1,6 @@
 package com.example.textnowjetpackcompose.screens.utils
 
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -61,7 +60,7 @@ sealed class BottomNavItem(val title: String, val icon: ImageVector, val screen:
     object Chat : BottomNavItem("Chat",
         Icons.Outlined.Home, DestinationScreen.HomeScreenObj)
     object Status : BottomNavItem("Status",
-        Icons.Outlined.DataUsage, DestinationScreen.StatusScreenObj)
+        Icons.Outlined.DataUsage, DestinationScreen.AiBotScreenObj)
     object Profile : BottomNavItem("Settings",
         Icons.Outlined.Person, DestinationScreen.ProfileScreenObj)
 }

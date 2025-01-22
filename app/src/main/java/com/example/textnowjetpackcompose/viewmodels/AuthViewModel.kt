@@ -139,6 +139,30 @@ class AuthViewModel(
         }
     }
 
+    fun updateProfilePic(profilePic: String) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            errorMessage.value = null
+            try {
+                val response = authRepository.updateProfile(profilePic)
+                if (response.status.isSuccess()) {
+                    val updatedUser = response.body<UserResponse>()
+                    _userResponse.value = updatedUser
+                    preferenceManager.saveUser(updatedUser)
+                    Log.d("ProfileViewModel", "updateProfilePic: Profile picture updated")
+                } else {
+                    val errorBody = response.body<String>()
+                    errorMessage.value = "Profile picture"
+                }
+            } catch (e: Exception) {
+                errorMessage.value = e.message ?: "An Unexpected message occurred during profile update"
+                Log.e("ProfileViewModel", "updateProfilePic: Error during profile update", e)
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
+
     private fun connectSocket(userId: String) {
         SocketHandler.setSocket(userId)
         SocketHandler.establishConnection()

@@ -15,6 +15,7 @@ import com.example.textnowjetpackcompose.data.repository.MessageRepository
 import com.example.textnowjetpackcompose.data.repository.MessageRepositoryImpl
 import com.example.textnowjetpackcompose.viewmodels.AuthViewModel
 import com.example.textnowjetpackcompose.viewmodels.ChatViewModels
+import com.example.textnowjetpackcompose.viewmodels.GeminiViewModel
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
@@ -49,6 +50,9 @@ val appModule = module {
             install(WebSockets)
         }
     }
+    viewModelOf(::AuthViewModel)
+    viewModelOf(::ChatViewModels)
+    viewModelOf(::GeminiViewModel)
     single {
         val client = get<HttpClient>()
         val dataStore = get<DataStore<Preferences>>()
@@ -60,7 +64,6 @@ val appModule = module {
         AuthRepositoryImpl(authApi, dataStore) as AuthRepository
     }
     single { get<Context>().dataStore }
-    viewModelOf(::AuthViewModel)
     single {
         val client = get<HttpClient>()
         val dataStore = get<DataStore<Preferences>>()
@@ -71,7 +74,6 @@ val appModule = module {
         val messageApi = get<MessageApi>()
         MessageRepositoryImpl(messageApi) as MessageRepository
     }
-    viewModelOf(::ChatViewModels)
     single { SocketHandler }
 
 }

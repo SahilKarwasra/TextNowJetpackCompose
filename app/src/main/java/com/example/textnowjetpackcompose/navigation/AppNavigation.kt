@@ -20,7 +20,7 @@ import com.example.textnowjetpackcompose.screens.auth.SignUpScreen
 import com.example.textnowjetpackcompose.screens.chats.ChatScreen
 import com.example.textnowjetpackcompose.screens.home.HomeScreen
 import com.example.textnowjetpackcompose.screens.profile.ProfileScreen
-import com.example.textnowjetpackcompose.screens.status.StatusScreen
+import com.example.textnowjetpackcompose.screens.aibot.AiBotScreen
 import com.example.textnowjetpackcompose.screens.utils.BottomNavigationBar
 import com.example.textnowjetpackcompose.viewmodels.AuthViewModel
 import org.koin.androidx.compose.koinViewModel
@@ -91,9 +91,9 @@ fun AppNavigation() {
                     }
                 )
             }
-            composable<DestinationScreen.StatusScreenObj> {
+            composable<DestinationScreen.AiBotScreenObj> {
                 showBottomBar.value = true
-                StatusScreen()
+                AiBotScreen()
             }
             composable<DestinationScreen.ProfileScreenObj> {
                 showBottomBar.value = true

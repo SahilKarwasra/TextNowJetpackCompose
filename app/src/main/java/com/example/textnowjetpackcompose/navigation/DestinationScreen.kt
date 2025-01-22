@@ -17,7 +17,7 @@ sealed class DestinationScreen{
     data object HomeScreenObj : DestinationScreen()
 
     @Serializable
-    data object StatusScreenObj : DestinationScreen()
+    data object AiBotScreenObj : DestinationScreen()
 
     @Serializable
     data object ProfileScreenObj : DestinationScreen()

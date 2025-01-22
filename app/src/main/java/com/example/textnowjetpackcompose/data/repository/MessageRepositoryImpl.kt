@@ -74,4 +74,26 @@ class MessageRepositoryImpl(
             }
         }
     }
+
+    override suspend fun generateText(prompt: String): Result<String> {
+        Log.d(
+            "MessageRepositoryImpl",
+            "generateText: Starting GenerateText Request from MessageRepositoryImpl"
+        )
+        return try {
+            val response = messageApi.generateText(prompt)
+            Log.d(
+                "MessageRepositoryImpl",
+                "generateText: Response from MessageRepositoryImpl: $response",
+            )
+            Result.success(response)
+        } catch (e: Exception) {
+            Log.e(
+                "MessageRepositoryImpl",
+                "generateText: Error during GenerateText Request from MessageRepositoryImpl",
+                e
+            )
+            Result.failure(e)
+        }
+    }
 }

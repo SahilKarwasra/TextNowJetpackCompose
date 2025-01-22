@@ -8,4 +8,5 @@ interface MessageRepository {
     suspend fun getUsers(): Result<List<UserResponse>>
     suspend fun getMessages(receiverId: String): Result<List<MessageModel>>
     suspend fun sendMessage(receiverId: String, messageModel: MessageModel): HttpResponse
+    suspend fun generateText(prompt: String): Result<String>
 }

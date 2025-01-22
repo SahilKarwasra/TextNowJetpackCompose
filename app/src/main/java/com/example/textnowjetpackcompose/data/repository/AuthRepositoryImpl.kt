@@ -45,6 +45,16 @@ class AuthRepositoryImpl(
         }
     }
 
+    override suspend fun updateProfile(profilePic: String): HttpResponse {
+        return withContext(Dispatchers.IO) {
+            try {
+                authApi.updateProfile(profilePic)
+            } catch (e: Exception) {
+                throw e
+            }
+        }
+    }
+
     override suspend fun logout(): HttpResponse {
         return withContext(Dispatchers.IO) {
             try {

@@ -9,5 +9,6 @@ interface AuthApi {
     suspend fun signup(request: SignupRequest): UserResponse
     suspend fun login(request: LoginRequest): UserResponse
     suspend fun checkAuth(): UserResponse
+    suspend fun updateProfile(profilePic: String): HttpResponse
     suspend fun logout(): HttpResponse
 }

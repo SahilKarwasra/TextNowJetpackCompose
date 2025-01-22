@@ -15,6 +15,7 @@ import io.ktor.client.plugins.websocket.WebSockets
 import io.ktor.client.request.get
 import io.ktor.client.request.headers
 import io.ktor.client.request.post
+import io.ktor.client.request.put
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.HttpResponse
 import io.ktor.http.ContentType
@@ -46,11 +47,14 @@ class AuthApiImpl(
                 setBody(request)
             }
 
-            if (response.status == HttpStatusCode.BadRequest){
+            if (response.status == HttpStatusCode.BadRequest) {
                 val errorBody = response.body<String>()
                 val errorResponse = Json
                     .decodeFromString<ErrorResponse>(errorBody)
-                Log.e("Cookie Signup", "signup: Server error: ${response.status}, message: ${errorResponse.message}")
+                Log.e(
+                    "Cookie Signup",
+                    "signup: Server error: ${response.status}, message: ${errorResponse.message}"
+                )
                 throw Exception("Signup failed: ${errorResponse.message}")
             }
 
@@ -74,7 +78,7 @@ class AuthApiImpl(
 
 
             return response.body()
-        } catch (e:Exception) {
+        } catch (e: Exception) {
             Log.e("AuthApiImpl", "signup: Error during signup", e)
             throw e
         }
@@ -156,7 +160,10 @@ class AuthApiImpl(
             Log.d("Logout AuthApiImpl", "logout: Response status: ${response.status}")
             if (!response.status.isSuccess()) {
                 val errorBody = response.body<String>()
-                Log.e("Logout AuthApiImpl", "logout: HTTP error: ${response.status}, body: $errorBody")
+                Log.e(
+                    "Logout AuthApiImpl",
+                    "logout: HTTP error: ${response.status}, body: $errorBody"
+                )
                 throw Exception("HTTP error: ${response.status}")
             }
             dataStore.updateData { settings ->
@@ -170,6 +177,29 @@ class AuthApiImpl(
     }
 
 
+    override suspend fun updateProfile(profilePic: String): HttpResponse {
+        val token = dataStore.data.firstOrNull()?.get(authTokenKey)
+        val rawToken = token?.substringBefore(";")
 
+        try {
+            val response: HttpResponse = client.put(HttpRoutes.updateProfile) {
+                headers {
+                    append(HttpHeaders.Cookie, "$rawToken")
+                }
+                contentType(ContentType.Application.Json)
+                setBody(mapOf("profilePic" to profilePic))
+            }
+            if (!response.status.isSuccess()) {
+                val errorBody = response.body<String>()
+                Log.e("updateProfile", "HTTP error: ${response.status}, body: $errorBody")
+                throw Exception("Update profile failed: ${response.status}, body: $errorBody")
+            }
+            Log.d("updateProfile", "Profile updated successfully")
+            return response
+        } catch (e: Exception) {
+            Log.e("updateProfile", "Exception during profile update", e)
+            throw e
+        }
 
+    }
 }

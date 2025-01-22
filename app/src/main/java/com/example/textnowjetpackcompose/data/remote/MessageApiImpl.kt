@@ -20,7 +20,9 @@ import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.withContext
 import java.io.IOException
 
 class MessageApiImpl(
@@ -91,6 +93,25 @@ class MessageApiImpl(
         } catch (e: Exception) {
             Log.e("sendMessage", "Error sending message: ${e.message}")
             throw e
+        }
+    }
+
+    override suspend fun generateText(prompt: String): String {
+
+        return withContext(Dispatchers.IO){
+            try {
+                val response = client.post(HttpRoutes.generateText) {
+                    contentType(ContentType.Application.Json)
+                    setBody(mapOf("message" to prompt))
+                }
+                val responseBody = response.body<Map<String, String>>() // If the response is simply a map of strings
+                val aiResponse = responseBody["response"] as? String
+                aiResponse?.trim() ?: throw Exception("No response received from server")
+
+            } catch (e: Exception) {
+                Log.e("generateText", "Error generating text: ${e.message}")
+                throw Exception("Failed to generate message: ${e.message}")
+            }
         }
     }
 }

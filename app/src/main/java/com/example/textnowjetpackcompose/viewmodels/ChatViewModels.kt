@@ -78,7 +78,6 @@ class ChatViewModels(
         SocketHandler.closeConnection()
     }
 
-
     suspend fun getUsers() {
         _chatState.value = _chatState.value.copy(
             errorMessage = null,
