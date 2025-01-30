@@ -1,5 +1,6 @@
 package com.example.textnowjetpackcompose.screens.home.components
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -29,6 +30,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.semantics.text
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
@@ -138,8 +140,6 @@ fun UsersList( navigate: (DestinationScreen) -> Unit) {
 
     val state by viewModel.chatState.collectAsState()
 
-
-
     when{
         state.isLoading -> {
             CircularProgressIndicator()
@@ -158,11 +158,12 @@ fun UsersList( navigate: (DestinationScreen) -> Unit) {
                     Spacer(modifier = Modifier.padding(top = 13.dp))
                 }
                 items(state.users) { user ->
+                    val lastMessage = state.lastMessages[user.id] ?: ""
                     UsersBox(
                         profilePicUrl = user.profilePic,
                         name = user.fullName,
-                        message = "chat.message",
-                        time = "12:20",
+                        message = lastMessage,
+                        time = state.messages.lastOrNull { it.receiverId == user.id }?.createdAt ?: "",
                         onClick = {
                             navigate(DestinationScreen.ChatScreenObj(user.id,user.fullName))
                         }

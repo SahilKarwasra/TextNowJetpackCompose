@@ -6,27 +6,33 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.example.textnowjetpackcompose.data.HttpRoutes
-import com.example.textnowjetpackcompose.data.model.UserResponse
 import com.example.textnowjetpackcompose.data.model.LoginRequest
 import com.example.textnowjetpackcompose.data.model.SignupRequest
+import com.example.textnowjetpackcompose.data.model.UserResponse
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
-import io.ktor.client.plugins.websocket.WebSockets
+import io.ktor.client.request.forms.MultiPartFormDataContent
+import io.ktor.client.request.forms.formData
+import io.ktor.client.request.forms.submitFormWithBinaryData
 import io.ktor.client.request.get
+import io.ktor.client.request.header
 import io.ktor.client.request.headers
 import io.ktor.client.request.post
 import io.ktor.client.request.put
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.HttpResponse
+import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
+import io.ktor.http.Headers
 import io.ktor.http.HttpHeaders
+import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import java.io.File
 
 class AuthApiImpl(
     private val client: HttpClient,
@@ -177,29 +183,50 @@ class AuthApiImpl(
     }
 
 
-    override suspend fun updateProfile(profilePic: String): HttpResponse {
+    override suspend fun updateProfile(bytes: ByteArray): HttpResponse {
         val token = dataStore.data.firstOrNull()?.get(authTokenKey)
         val rawToken = token?.substringBefore(";")
 
         try {
-            val response: HttpResponse = client.put(HttpRoutes.updateProfile) {
-                headers {
-                    append(HttpHeaders.Cookie, "$rawToken")
-                }
-                contentType(ContentType.Application.Json)
-                setBody(mapOf("profilePic" to profilePic))
+            val file = File.createTempFile("profile", ".jpg")
+            file.writeBytes(bytes)
+            Log.d("bro", "updateProfile: ${file.totalSpace}")
+
+            val response: HttpResponse = client.put("https://textnowbackend.onrender.com/api/auth/update-profile") {
+                header(HttpHeaders.Cookie, rawToken)
+                setBody(
+                    MultiPartFormDataContent(
+                        formData {
+                            append(
+                                key = "profilePic",
+                                value = file.readBytes(),
+                                headers = Headers.build {
+                                    append(HttpHeaders.ContentType, "image/jpg")
+                                    append(HttpHeaders.ContentDisposition, "filename=${file.name}.jpg")
+                                }
+                            )
+                        }
+                    )
+                )
+
             }
+
+
+            println(response.bodyAsText())
+
             if (!response.status.isSuccess()) {
                 val errorBody = response.body<String>()
                 Log.e("updateProfile", "HTTP error: ${response.status}, body: $errorBody")
                 throw Exception("Update profile failed: ${response.status}, body: $errorBody")
             }
+
             Log.d("updateProfile", "Profile updated successfully")
             return response
         } catch (e: Exception) {
             Log.e("updateProfile", "Exception during profile update", e)
             throw e
         }
-
     }
+
+
 }

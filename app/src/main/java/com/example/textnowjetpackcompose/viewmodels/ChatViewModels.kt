@@ -1,6 +1,7 @@
 package com.example.textnowjetpackcompose.viewmodels
 
 import android.util.Log
+import androidx.compose.animation.core.copy
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -17,6 +18,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
@@ -38,6 +40,13 @@ class ChatViewModels(
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), ChatState())
 
     private var socket: Socket? = null
+
+    init {
+        Log.d("Users", "${chatState.value.users} ")
+        if (chatState.value.users.isEmpty()) {
+            getUsers()
+        }
+    }
 
     fun initializeSocket(userId: String) {
 
@@ -78,31 +87,35 @@ class ChatViewModels(
         SocketHandler.closeConnection()
     }
 
-    suspend fun getUsers() {
+    private fun getUsers() {
         _chatState.value = _chatState.value.copy(
             errorMessage = null,
             isLoading = true
         )
-        try {
-            val result = messageRepository.getUsers()
-            result.fold(
-                onSuccess = {
-                    _chatState.value = _chatState.value.copy(
-                        users = it,
-                        isLoading = false
-                    )
+        viewModelScope.launch {
+            withContext(Dispatchers.IO) {
+                try {
+                    val result = messageRepository.getUsers()
+                    result.fold(
+                        onSuccess = {
+                            _chatState.value = _chatState.value.copy(
+                                users = it,
+                                isLoading = false
+                            )
 
-                },
-                onFailure = {
+                        },
+                        onFailure = {
+                            _chatState.value = _chatState.value.copy(
+                                errorMessage = it.message
+                            )
+                        }
+                    )
+                } catch (e: Exception) {
                     _chatState.value = _chatState.value.copy(
-                        errorMessage = it.message
+                        errorMessage = e.message
                     )
                 }
-            )
-        } catch (e: Exception) {
-            _chatState.value = _chatState.value.copy(
-                errorMessage = e.message
-            )
+            }
         }
     }
 
@@ -142,7 +155,10 @@ class ChatViewModels(
             if (response.status.value == 200 || response.status.value == 201) {
                 Log.d("ChatViewModel", "sendMessage: Message sent successfully")
             } else {
-                Log.e("ChatViewModel", "sendMessage: Failed to send message  ${response.status.value}")
+                Log.e(
+                    "ChatViewModel",
+                    "sendMessage: Failed to send message  ${response.status.value}"
+                )
             }
         } catch (e: Exception) {
             Log.e("ChatViewModel", "sendMessage: Error sending message", e)
@@ -153,4 +169,6 @@ class ChatViewModels(
         super.onCleared()
         disconnectSocket()
     }
+
+
 }

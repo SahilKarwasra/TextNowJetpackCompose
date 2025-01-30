@@ -7,5 +7,6 @@ data class ChatState(
     val messages: List<MessageModel> = emptyList(),
     val isLoading: Boolean = false,
     val errorMessage: String? = null,
-    val users: List<UserResponse> = emptyList()
+    val users: List<UserResponse> = emptyList(),
+    val lastMessages: Map<String, String?> = emptyMap()
 )

@@ -139,12 +139,17 @@ class AuthViewModel(
         }
     }
 
-    fun updateProfilePic(profilePic: String) {
+    fun updateProfilePic(imageBytes: ByteArray?) {
+        if (imageBytes == null) {
+            Log.e("ProfileViewModel", "updateProfilePic: Image bytes are null")
+            return
+        }
+
         viewModelScope.launch {
             _isLoading.value = true
             errorMessage.value = null
             try {
-                val response = authRepository.updateProfile(profilePic)
+                val response = authRepository.updateProfile(imageBytes)
                 if (response.status.isSuccess()) {
                     val updatedUser = response.body<UserResponse>()
                     _userResponse.value = updatedUser
@@ -152,10 +157,11 @@ class AuthViewModel(
                     Log.d("ProfileViewModel", "updateProfilePic: Profile picture updated")
                 } else {
                     val errorBody = response.body<String>()
-                    errorMessage.value = "Profile picture"
+                    errorMessage.value = "Profile picture update failed: $errorBody"
+                    Log.e("ProfileViewModel", "updateProfilePic: $errorBody")
                 }
             } catch (e: Exception) {
-                errorMessage.value = e.message ?: "An Unexpected message occurred during profile update"
+                errorMessage.value = e.message ?: "An Unexpected error occurred during profile update"
                 Log.e("ProfileViewModel", "updateProfilePic: Error during profile update", e)
             } finally {
                 _isLoading.value = false
