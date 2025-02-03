@@ -31,7 +31,8 @@ TextNow is a sleek and user-friendly chat application built using **Jetpack Comp
 
 ## 📸 Screenshots
 
-_(Add screenshots of the app here)_
+![Image](https://github.com/user-attachments/assets/19b0169a-abaf-4794-aea7-f3cc1811a3be)
+![Image](https://github.com/user-attachments/assets/ab977943-1541-44af-bc73-33141a295c76)
 
 ## 🏗️ Project Setup
 
