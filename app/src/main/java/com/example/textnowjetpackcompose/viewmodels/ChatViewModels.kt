@@ -49,37 +49,52 @@ class ChatViewModels(
     }
 
     fun initializeSocket(userId: String) {
-
         SocketHandler.setSocket(userId)
-        socket = SocketHandler.getSocket()
-        SocketHandler.establishConnection()
+        socket = SocketHandler.getSocket().apply {
+            // Clear existing listeners first
+            off("newMessage")
 
-        // Listen for new messages
-        socket?.on("newMessage") { args ->
-            if (args.isNotEmpty()) {
-                Log.d("WebSocket", "New message event received: $args")
-//                val data = args[0] as JSONObject
-//                val newMessage = MessageModel(
-//                    senderId = data.getString("senderId"),
-//                    receiverId = data.getString("receiverId"),
-//                    text = data.optString("text", ""),
-//                    image = data.optString("image"),
-//                    createdAt = data.getString("createdAt"),
-//                    updatedAt = data.optString("updatedAt", "")
-//                )
-                val data = args[0].toString()
-                val json = Json {
-                    ignoreUnknownKeys = true
-                }
-                val newMessage = json.decodeFromString<MessageModel>(data)
-                viewModelScope.launch {
-                    _messageText.value = _messageText.value.plus(newMessage)
-                }
-//                Log.d("WebSocket", "Adding message: $newMessage")
-//                _messageText.value += newMessage
+            // Handle connection lifecycle
+            on(Socket.EVENT_CONNECT) {
+                Log.d("SocketIO", "Connected to server")
+            }
 
+            on(Socket.EVENT_DISCONNECT) {
+                Log.d("SocketIO", "Disconnected from server")
+            }
+
+            on(Socket.EVENT_CONNECT_ERROR) { args ->
+                Log.e("SocketIO", "Connection error: ${args.toList()}")
+            }
+
+            // Handle new messages
+            on("newMessage") { args ->
+                if (args.isNotEmpty()) {
+                    try {
+                        val json = Json { ignoreUnknownKeys = true }
+                        val newMessage = json.decodeFromString<MessageModel>(args[0].toString())
+
+                        viewModelScope.launch {
+                            _messageText.update { currentMessages ->
+                                // Add only if message doesn't exist
+                                if (currentMessages.none { it.createdAt == newMessage.createdAt }) {
+                                    currentMessages + newMessage
+                                } else {
+                                    currentMessages
+                                }
+                            }
+                        }
+                    } catch (e: Exception) {
+                        Log.e("SocketIO", "Error parsing message", e)
+                        _chatState.update {
+                            it.copy(errorMessage = "Error receiving message")
+                        }
+                    }
+                }
             }
         }
+
+        SocketHandler.establishConnection()
     }
 
     fun disconnectSocket() {
@@ -128,12 +143,13 @@ class ChatViewModels(
 
             val result = messageRepository.getMessages(receiverId)
             result.fold(
-                onSuccess = {
-                    _messageText.value = it
+                onSuccess = { messages ->
+                    _messageText.value = messages.sortedBy {
+                        it.createdAt
+                    }
                     _chatState.value = _chatState.value.copy(
                         isLoading = false
                     )
-                    Log.d("ChatViewModel", "getMessages: Success ${it}")
                 },
                 onFailure = {
                     _chatState.value = _chatState.value.copy(

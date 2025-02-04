@@ -2,10 +2,18 @@ package com.example.textnowjetpackcompose.screens.chats
 
 import android.view.ViewTreeObserver
 import android.widget.Toast
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.VisibilityThreshold
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkOut
+import androidx.compose.animation.slideIn
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -15,6 +23,8 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.outlined.Send
@@ -22,9 +32,13 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
@@ -78,8 +92,10 @@ fun ChatScreen(
 
 
     Scaffold(
-        modifier = Modifier.imePadding() // Adjusts for keyboard automatically
-            .consumeWindowInsets(WindowInsets.ime),
+        modifier = Modifier
+            .fillMaxSize()
+            .windowInsetsPadding(WindowInsets.ime)
+            .imePadding(), // Adjusts for keyboard automatically
         topBar = {
             TopAppBar(
                 title = {
@@ -129,18 +145,25 @@ fun ChatScreen(
             )
         }
     ) {
-        ChatMessagesContainer(
+        Column(
             modifier = Modifier
+                .fillMaxSize()
                 .padding(it)
-                .fillMaxSize(),
-            messages = {
-                chatState.messages
-            },
-            listState = listState
-        )
+        ) {
+            ChatMessagesContainer(
+                modifier = Modifier.weight(1f)
+                    .windowInsetsPadding(WindowInsets.ime.union(WindowInsets.systemBars)),
+                messages = {
+                    chatState.messages
+                },
+                listState = listState
+            )
+        }
+
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun ChatMessagesContainer(
     messages: () -> List<MessageModel>,
@@ -151,73 +174,114 @@ fun ChatMessagesContainer(
         derivedStateOf { messages() }
     }
     LazyColumn(
-        modifier = modifier.padding(horizontal = 8.dp, vertical = 2.dp)
-            .windowInsetsPadding(WindowInsets.ime),
-        verticalArrangement = Arrangement.spacedBy(4.dp),
-        state = listState
+        modifier = modifier
+            .padding(horizontal = 8.dp, vertical = 2.dp)
+            .windowInsetsPadding(WindowInsets.ime.union(WindowInsets.systemBars)),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
+        state = listState,
     ) {
         items(messagesList, key = { message -> message.createdAt }) { message ->
-            ChatBubble(message, Modifier.animateItem(
-                placementSpec = tween(
-                    3000
-                ),
-                fadeInSpec = null,
-                fadeOutSpec = null
-            ))
+            val preferenceManager = PreferenceManager(LocalContext.current)
+            val currentUser = preferenceManager.getUser()
+            val currentUserId = currentUser?.id ?: ""
+            val isCurrentUser = message.senderId == currentUserId
+            AnimatedVisibility(
+                visible = true,
+                enter = slideInHorizontally(
+                    initialOffsetX = { if (isCurrentUser) it else -it },
+                    animationSpec = tween(300)
+                ) + fadeIn(),
+                exit = shrinkOut() + fadeOut()
+            ) {
+                ChatBubble(
+                    message, modifier = Modifier.animateItem(fadeInSpec = null, fadeOutSpec = null)
+                )
+            }
         }
     }
 }
 
 @Composable
-fun ChatBubble(message: MessageModel,modifier: Modifier = Modifier) {
+fun ChatBubble(
+    message: MessageModel,
+    modifier: Modifier = Modifier
+) {
     val preferenceManager = PreferenceManager(LocalContext.current)
     val userResponse = preferenceManager.getUser()
     val sentByMe = message.senderId == userResponse?.id
 
-    Row(
+    val bubbleColor = if (sentByMe) {
+        MaterialTheme.colorScheme.surfaceContainerHigh
+    } else {
+        if (isSystemInDarkTheme()){
+            Color(0xff7c1034)
+        } else
+        {
+            Color(0xff4c99f3)
+        }
+    }
+
+    val shape = if (sentByMe) {
+        RoundedCornerShape(16.dp, 4.dp, 16.dp, 16.dp)
+    } else {
+        RoundedCornerShape(4.dp, 16.dp, 16.dp, 16.dp)
+    }
+
+    Box(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 8.dp),
-        horizontalArrangement = if (sentByMe) Arrangement.End else Arrangement.Start,
-        verticalAlignment = Alignment.Bottom
+            .padding(horizontal = 4.dp)
     ) {
+
         Column(
             modifier = Modifier
-                .padding(4.dp)
-                .background(
-                    color = if (sentByMe) MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.8f)
-                    else MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.8f),
-                    shape = if (sentByMe) RoundedCornerShape(
-                        topStart = 14.dp, topEnd = 14.dp, bottomStart = 14.dp
-                    ) else RoundedCornerShape(
-                        topStart = 14.dp, topEnd = 14.dp, bottomEnd = 14.dp
-                    )
-                )
-                .padding(7.dp)
+                .fillMaxWidth(0.7f)
+                .align(if (sentByMe) Alignment.TopEnd else Alignment.TopStart),
+            horizontalAlignment = if (sentByMe) Alignment.End else Alignment.Start
         ) {
-            message.text?.let {
-                Text(
-                    text = it,
-                    style = MaterialTheme.typography.titleLarge,
-                    color = MaterialTheme.colorScheme.onSurface.copy(0.8f)
-                )
+
+
+            Box(
+                modifier = modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 8.dp, vertical = 4.dp),
+                contentAlignment = if (sentByMe) Alignment.CenterEnd else Alignment.CenterStart
+            ) {
+                Column(
+                    modifier = Modifier
+                        .wrapContentWidth()
+                        .background(bubbleColor, shape)
+                        .padding(12.dp),
+                    horizontalAlignment = if (sentByMe) Alignment.End else Alignment.Start
+                ) {
+                    message.text?.let {
+                        Text(
+                            text = it,
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+
+                    message.image?.let { url ->
+                        Spacer(modifier = Modifier.height(8.dp))
+                        AsyncImage(
+                            model = url,
+                            contentDescription = "Attached image",
+                            modifier = Modifier
+                                .sizeIn(maxWidth = 250.dp)
+                                .clip(RoundedCornerShape(8.dp))
+                        )
+                    }
+
+//                    Text(
+//                        text = SimpleDateFormat("hh:mm a", Locale.getDefault())
+//                            .format(Date(message.createdAt.toLong())),
+//                        style = MaterialTheme.typography.labelSmall,
+//                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+//                        modifier = Modifier.padding(top = 4.dp)
+//                    )
+                }
             }
-            Spacer(modifier = Modifier.height(4.dp))
-            message.image?.let {
-                AsyncImage(
-                    model = it,
-                    contentDescription = "Attached image",
-                    modifier = Modifier.size(150.dp),
-                )
-            }
-//            message.createdAt?.let {
-//                val formattedTime = SimpleDateFormat("hh:mm a", Locale.getDefault()).format(Date(it.toLong()))
-//                Text(
-//                    text = formattedTime,
-//                    fontSize = 10.sp,
-//                    textAlign = TextAlign.End
-//                )
-//            }
         }
     }
 }
@@ -256,7 +320,19 @@ fun SendMessageTextField(
                 ) {
                     Icon(Icons.AutoMirrored.Outlined.Send, contentDescription = "Send")
                 }
-            }
+            },
+            keyboardOptions = KeyboardOptions(
+                imeAction = ImeAction.Send,
+                keyboardType = KeyboardType.Text
+            ),
+            keyboardActions = KeyboardActions(
+                onSend = {
+                    if (message.isNotBlank()) {
+                        onSendMessage(message.trim())
+                        message = ""
+                    }
+                }
+            ),
         )
     }
 }

@@ -32,6 +32,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.text
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.example.textnowjetpackcompose.R
@@ -96,6 +97,9 @@ fun UsersBox(
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.Thin,
                     modifier = Modifier.padding(top = 8.dp)
+                        .fillMaxWidth(0.7f),
+                    overflow = TextOverflow.Ellipsis,
+                    maxLines = 1
                 )
             }
             Spacer(modifier = Modifier.weight(1f))
@@ -158,16 +162,17 @@ fun UsersList( navigate: (DestinationScreen) -> Unit) {
                     Spacer(modifier = Modifier.padding(top = 13.dp))
                 }
                 items(state.users) { user ->
-                    val lastMessage = state.lastMessages[user.id] ?: ""
-                    UsersBox(
-                        profilePicUrl = user.profilePic,
-                        name = user.fullName,
-                        message = lastMessage,
-                        time = state.messages.lastOrNull { it.receiverId == user.id }?.createdAt ?: "",
-                        onClick = {
-                            navigate(DestinationScreen.ChatScreenObj(user.id,user.fullName))
-                        }
-                    )
+                    user.lastMessage?.let {
+                        UsersBox(
+                            profilePicUrl = user.profilePic,
+                            name = user.fullName,
+                            message = it.text,
+                            time = state.messages.lastOrNull { it.receiverId == user.id }?.createdAt ?: "",
+                            onClick = {
+                                navigate(DestinationScreen.ChatScreenObj(user.id,user.fullName))
+                            }
+                        )
+                    }
                 }
             }
         }
