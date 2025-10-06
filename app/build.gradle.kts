@@ -7,12 +7,12 @@ plugins {
 
 android {
     namespace = "com.example.textnowjetpackcompose"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.example.textnowjetpackcompose"
         minSdk = 28
-        targetSdk = 35
+        targetSdk = 36
         versionCode = 1
         versionName = "1.0"
 
@@ -64,12 +64,16 @@ dependencies {
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.datastore.preferences)
 
-    implementation("io.coil-kt.coil3:coil-compose:3.0.4")
-    implementation("io.coil-kt.coil3:coil-network-okhttp:3.0.4")
+    implementation(libs.coil3.coil.compose)
+    implementation(libs.coil.network.okhttp)
 
     implementation("io.socket:socket.io-client:2.0.0"){
         exclude(group="org.json", module="json")
     }
+    implementation(libs.accompanist.placeholder.material)
+    implementation(libs.androidx.material3.window.size.class1)
+    implementation(libs.androidx.material3.adaptive.navigation.suite)
+    implementation(libs.material3)
 
 
 }
