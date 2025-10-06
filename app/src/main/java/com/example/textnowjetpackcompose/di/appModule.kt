@@ -4,18 +4,19 @@ import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStore
-import com.example.textnowjetpackcompose.data.SocketHandler
-import com.example.textnowjetpackcompose.data.remote.AuthApi
-import com.example.textnowjetpackcompose.data.remote.AuthApiImpl
-import com.example.textnowjetpackcompose.data.remote.MessageApi
-import com.example.textnowjetpackcompose.data.remote.MessageApiImpl
-import com.example.textnowjetpackcompose.data.repository.AuthRepository
-import com.example.textnowjetpackcompose.data.repository.AuthRepositoryImpl
-import com.example.textnowjetpackcompose.data.repository.MessageRepository
-import com.example.textnowjetpackcompose.data.repository.MessageRepositoryImpl
-import com.example.textnowjetpackcompose.viewmodels.AuthViewModel
-import com.example.textnowjetpackcompose.viewmodels.ChatViewModels
-import com.example.textnowjetpackcompose.viewmodels.GeminiViewModel
+import com.example.textnowjetpackcompose.features.auth.data.remote.AuthApi
+import com.example.textnowjetpackcompose.features.auth.data.repository.AuthRepoImpl
+import com.example.textnowjetpackcompose.features.auth.domain.repository.AuthRepo
+import com.example.textnowjetpackcompose.features.auth.presentation.viewmodel.AuthViewModel
+import com.example.textnowjetpackcompose.config.SocketHandler
+import com.example.textnowjetpackcompose.features.chat.data.remote.ChatApi
+import com.example.textnowjetpackcompose.features.chat.data.repo.ChatRepoImpl
+import com.example.textnowjetpackcompose.features.chat.domain.repo.ChatRepo
+import com.example.textnowjetpackcompose.features.chat.presentation.viewmodel.ChatViewModel
+import com.example.textnowjetpackcompose.features.home.data.remote.HomeApi
+import com.example.textnowjetpackcompose.features.home.data.repo.HomeRepoImpl
+import com.example.textnowjetpackcompose.features.home.domain.repo.HomeRepo
+import com.example.textnowjetpackcompose.features.home.presentation.viewmodel.HomeScreenViewModel
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
@@ -27,11 +28,14 @@ import io.ktor.client.plugins.websocket.WebSockets
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
 import org.koin.androidx.viewmodel.dsl.viewModelOf
+import org.koin.core.module.dsl.singleOf
+import org.koin.dsl.bind
 import org.koin.dsl.module
 
 val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
 
 val appModule = module {
+    // Ktor Client
     single {
         HttpClient(CIO) {
             install(ContentNegotiation) {
@@ -50,30 +54,24 @@ val appModule = module {
             install(WebSockets)
         }
     }
-    viewModelOf(::AuthViewModel)
-    viewModelOf(::ChatViewModels)
-    viewModelOf(::GeminiViewModel)
-    single {
-        val client = get<HttpClient>()
-        val dataStore = get<DataStore<Preferences>>()
-        AuthApiImpl(client, dataStore) as AuthApi
-    }
-    single {
-        val authApi = get<AuthApi>()
-        val dataStore = get<DataStore<Preferences>>()
-        AuthRepositoryImpl(authApi, dataStore) as AuthRepository
-    }
+    // Utils
     single { get<Context>().dataStore }
-    single {
-        val client = get<HttpClient>()
-        val dataStore = get<DataStore<Preferences>>()
-
-        MessageApiImpl(client, dataStore) as MessageApi
-    }
-    single {
-        val messageApi = get<MessageApi>()
-        MessageRepositoryImpl(messageApi) as MessageRepository
-    }
     single { SocketHandler }
+
+    // Auth Dependencies
+    singleOf(::AuthApi)
+    singleOf(::AuthRepoImpl).bind(AuthRepo::class)
+    viewModelOf(::AuthViewModel)
+
+
+    // Home Dependencies
+    singleOf(::HomeApi)
+    singleOf(::HomeRepoImpl).bind(HomeRepo::class)
+    viewModelOf(::HomeScreenViewModel)
+
+    // Chat Dependencies
+    singleOf(::ChatApi)
+    singleOf(::ChatRepoImpl).bind(ChatRepo::class)
+    viewModelOf(::ChatViewModel)
 
 }
