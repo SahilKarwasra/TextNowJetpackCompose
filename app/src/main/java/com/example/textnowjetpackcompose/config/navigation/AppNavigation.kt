@@ -16,12 +16,14 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.ViewModel
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavController
 import androidx.navigation.NavDestination.Companion.hasRoute
@@ -33,6 +35,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navigation
 import androidx.navigation.toRoute
+import com.example.textnowjetpackcompose.config.SocketHandler
 import com.example.textnowjetpackcompose.features.auth.presentation.screen.LoginScreen
 import com.example.textnowjetpackcompose.features.auth.presentation.screen.SignUpScreen
 import com.example.textnowjetpackcompose.features.auth.presentation.screen.SplashScreen
@@ -58,9 +61,6 @@ import org.koin.androidx.compose.koinViewModel
 @Composable
 fun AppNavigation() {
     val navController = rememberNavController()
-    val authViewModel: AuthViewModel = koinViewModel()
-    val homeScreenViewModel: HomeScreenViewModel = koinViewModel()
-    val chatViewModel: ChatViewModel = koinViewModel()
 
     val snackbarHostState = remember { SnackbarHostState() }
     val snackBarCoroutineScope = rememberCoroutineScope()
@@ -101,20 +101,20 @@ fun AppNavigation() {
     } else {
         null
     }
-    val chatId: String? = if (
-        navBackStackEntry?.destination?.hasRoute(DestinationScreen.ChatScreenObj::class) == true
-    ) {
-        navBackStackEntry?.toRoute<DestinationScreen.ChatScreenObj>()?.userId
-    } else {
-        null
-    }
-    val receiverId: String? = if (
-        navBackStackEntry?.destination?.hasRoute(DestinationScreen.ChatScreenObj::class) == true
-    ) {
-        navBackStackEntry?.toRoute<DestinationScreen.ChatScreenObj>()?.receiverId
-    } else {
-        null
-    }//
+//    val chatId: String? = if (
+//        navBackStackEntry?.destination?.hasRoute(DestinationScreen.ChatScreenObj::class) == true
+//    ) {
+//        navBackStackEntry?.toRoute<DestinationScreen.ChatScreenObj>()?.userId
+//    } else {
+//        null
+//    }
+//    val receiverId: String? = if (
+//        navBackStackEntry?.destination?.hasRoute(DestinationScreen.ChatScreenObj::class) == true
+//    ) {
+//        navBackStackEntry?.toRoute<DestinationScreen.ChatScreenObj>()?.receiverId
+//    } else {
+//        null
+//    }
     Scaffold(
         topBar = {
             if (isChatScreenOrNot && chatTitle != null) {
@@ -133,13 +133,6 @@ fun AppNavigation() {
                         navController.navigate(it)
                     }
                 )
-            } else if (isChatScreenOrNot) {
-                SendMessageTextField(
-                    modifier = Modifier.imePadding().navigationBarsPadding(),
-                    chatViewModel = chatViewModel,
-                    receiverId = receiverId ?: "",
-                    userId = chatId ?: ""
-                )
             }
         },
         snackbarHost = {
@@ -150,41 +143,23 @@ fun AppNavigation() {
     ) {
         NavHost(
             navController = navController,
-            startDestination = DestinationScreen.SplashScreenObj,
+            startDestination = DestinationScreen.SubGraphAuth,
             modifier = Modifier.padding(it)
         ) {
-            composable<DestinationScreen.SplashScreenObj> {
-                SplashScreen(
-                    navigate = {
-                        navController.navigate(it) {
-                            popUpTo(0) { inclusive = true }
-                        }
-                    }, viewModel = authViewModel
-                )
-            }
 
             authenticationGraph(
                 appController = navController,
-                viewModel = authViewModel,
                 snackbarHostState = snackbarHostState,
                 coroutineScope = snackBarCoroutineScope
             )
 
             bottomBarGraph(
                 navController,
-                authViewModel,
-                homeScreenViewModel,
                 snackbarHostState,
                 snackBarCoroutineScope
             )
 
-            chatGraph(
-                appController = navController,
-                authViewModel = authViewModel,
-                homeScreenViewModel = homeScreenViewModel,
-                chatViewModel = chatViewModel
-            )
-
+            chatGraph(navController)
 
         }
     }
@@ -193,10 +168,8 @@ fun AppNavigation() {
 
 fun NavGraphBuilder.bottomBarGraph(
     appController: NavController,
-    authViewModel: AuthViewModel,
-    homeScreenViewModel: HomeScreenViewModel,
     snackbarHostState: SnackbarHostState,
-    coroutineScope: CoroutineScope
+    coroutineScope: CoroutineScope,
 ) {
     navigation<DestinationScreen.SubGraphBottomBar>(
         startDestination = DestinationScreen.HomeScreenObj,
@@ -207,13 +180,14 @@ fun NavGraphBuilder.bottomBarGraph(
             popEnterTransition = { fadeIn() + expandHorizontally() },
             popExitTransition = { fadeOut() + shrinkHorizontally() }
         ) {
+            val homeViewModel : HomeScreenViewModel = it.sharedKoinViewModel(appController)
+            val chatViewModel : ChatViewModel = it.sharedKoinViewModel(appController)
             HomeScreen(
-                authViewModel = authViewModel,
                 navigate = {
                     appController.navigate(it)
                 },
-                navController = appController,
-                homeScreenViewModel = homeScreenViewModel,
+                homeViewModel = homeViewModel,
+                chatViewModel = chatViewModel
             )
 
         }
@@ -226,6 +200,7 @@ fun NavGraphBuilder.bottomBarGraph(
             }
         }
         composable<DestinationScreen.ProfileScreenObj> {
+            val authViewModel: AuthViewModel = it.sharedKoinViewModel(appController)
             ProfileScreen(
                 authViewModel,
                 navigate = {
@@ -242,26 +217,38 @@ fun NavGraphBuilder.bottomBarGraph(
 
 fun NavGraphBuilder.authenticationGraph(
     appController: NavController,
-    viewModel: AuthViewModel,
     snackbarHostState: SnackbarHostState,
     coroutineScope: CoroutineScope
 ) {
     navigation<DestinationScreen.SubGraphAuth>(
-        startDestination = DestinationScreen.SignupScreenObj,
+        startDestination = DestinationScreen.SplashScreenObj,
     ) {
+        composable<DestinationScreen.SplashScreenObj> {
+            val authViewModel: AuthViewModel = it.sharedKoinViewModel(appController)
+
+            SplashScreen(
+                navigate = {
+                    appController.navigate(it) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                }, viewModel = authViewModel
+            )
+        }
         composable<DestinationScreen.SignupScreenObj>(
             enterTransition = { enterTransition },
             exitTransition = { exitTransition },
             popEnterTransition = { popEnterTransition },
             popExitTransition = { popExitTransition },
         ) {
+            val authViewModel: AuthViewModel = it.sharedKoinViewModel(appController)
+
             SignUpScreen(
                 navigate = {
                     appController.navigate(it) {
                         popUpTo(0) { inclusive = true }
                     }
                 },
-                viewModel = viewModel,
+                viewModel = authViewModel,
                 snackbarHostState = snackbarHostState,
                 coroutineScope = coroutineScope
             )
@@ -272,13 +259,15 @@ fun NavGraphBuilder.authenticationGraph(
             popEnterTransition = { popEnterTransition },
             popExitTransition = { popExitTransition },
         ) {
+            val authViewModel: AuthViewModel = it.sharedKoinViewModel(appController)
+
             LoginScreen(
                 navigate = {
                     appController.navigate(it) {
                         popUpTo(0) { inclusive = true }
                     }
                 },
-                viewModel = viewModel,
+                viewModel = authViewModel,
                 snackbarHostState = snackbarHostState,
                 coroutineScope = coroutineScope
             )
@@ -286,12 +275,7 @@ fun NavGraphBuilder.authenticationGraph(
     }
 }
 
-fun NavGraphBuilder.chatGraph(
-    appController: NavController,
-    authViewModel: AuthViewModel,
-    homeScreenViewModel: HomeScreenViewModel,
-    chatViewModel: ChatViewModel,
-) {
+fun NavGraphBuilder.chatGraph(appController: NavController) {
     navigation<DestinationScreen.SubChatGraph>(
         startDestination = DestinationScreen.ChatScreenObj::class
     ) {
@@ -301,16 +285,29 @@ fun NavGraphBuilder.chatGraph(
             popEnterTransition = { fadeIn() + expandHorizontally() },
             popExitTransition = { fadeOut() + shrinkHorizontally() },
         ) {
-            val username = it.toRoute<DestinationScreen.ChatScreenObj>().userName
-            val userId = it.toRoute<DestinationScreen.ChatScreenObj>().userId
-            val receiverId = it.toRoute<DestinationScreen.ChatScreenObj>().receiverId
-
+            val args = it.toRoute<DestinationScreen.ChatScreenObj>()
+            val chatViewModel: ChatViewModel = it.sharedKoinViewModel(appController)
             ChatScreen(
-                username = username,
-                userId = userId,
-                receiverId = receiverId,
-                viewModel = chatViewModel
+                userId = args.userId,
+                viewModel = chatViewModel,
+                receiverId = args.receiverId,
             )
         }
     }
+}
+
+
+
+
+@Composable
+private inline fun <reified T: ViewModel> NavBackStackEntry.sharedKoinViewModel(
+    navController: NavController
+): T {
+    val navGraphRoute = destination.parent?.route ?: return koinViewModel<T>()
+    val parentEntry = remember(this) {
+        navController.getBackStackEntry(navGraphRoute)
+    }
+    return koinViewModel(
+        viewModelStoreOwner = parentEntry
+    )
 }

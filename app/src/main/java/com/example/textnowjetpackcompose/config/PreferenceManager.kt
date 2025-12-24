@@ -2,6 +2,7 @@ package com.example.textnowjetpackcompose.config
 
 import android.content.Context
 import com.example.textnowjetpackcompose.features.home.domain.model.UserResponse
+import androidx.core.content.edit
 
 class PreferenceManager(context: Context) {
     val sharedPreferences = context.getSharedPreferences("MyPrefs", Context.MODE_PRIVATE)
@@ -13,10 +14,10 @@ class PreferenceManager(context: Context) {
     }
 
     fun saveUser(user: UserResponse) {
-        sharedPreferences.edit().putString(USER_ID, user.id).apply()
-        sharedPreferences.edit().putString(USER_NAME, user.fullName).apply()
-        sharedPreferences.edit().putString(USER_EMAIL, user.email).apply()
-        sharedPreferences.edit().putString(USER_PROFILE_PIC, user.profilePic).apply()
+        sharedPreferences.edit { putString(USER_ID, user.id) }
+        sharedPreferences.edit { putString(USER_NAME, user.fullName) }
+        sharedPreferences.edit { putString(USER_EMAIL, user.email) }
+        sharedPreferences.edit { putString(USER_PROFILE_PIC, user.profilePic) }
     }
 
     fun getUser(): UserResponse? {
@@ -32,9 +33,9 @@ class PreferenceManager(context: Context) {
     }
 
     fun deleteUser() {
-        sharedPreferences.edit().putString(USER_ID, null).apply()
-        sharedPreferences.edit().putString(USER_NAME, null).apply()
-        sharedPreferences.edit().putString(USER_EMAIL, null).apply()
-        sharedPreferences.edit().putString(USER_PROFILE_PIC, null).apply()
+        sharedPreferences.edit { putString(USER_ID, null) }
+        sharedPreferences.edit { putString(USER_NAME, null) }
+        sharedPreferences.edit { putString(USER_EMAIL, null) }
+        sharedPreferences.edit { putString(USER_PROFILE_PIC, null) }
     }
 }

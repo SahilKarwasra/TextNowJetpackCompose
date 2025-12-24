@@ -5,6 +5,7 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.example.textnowjetpackcompose.config.HttpRoutes
 import com.example.textnowjetpackcompose.features.chat.domain.model.MessageModel
+import com.example.textnowjetpackcompose.features.chat.domain.model.MessageRequest
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.get
@@ -44,7 +45,7 @@ class ChatApi(
         }
     }
 
-    suspend fun sendMessage(receiverId: String, messageModel: MessageModel): MessageModel {
+    suspend fun sendMessage(receiverId: String, messageRequest: MessageRequest): MessageModel {
         val token = dataStore.data.firstOrNull()?.get(authTokenKey)
         val rawToken = token?.substringBefore(";")
 
@@ -55,7 +56,7 @@ class ChatApi(
                         append(HttpHeaders.Cookie, "$rawToken")
                     }
                     contentType(ContentType.Application.Json)
-                    setBody(messageModel)
+                    setBody(messageRequest)
                 }
                 response.body()
             } catch (e: Exception) {

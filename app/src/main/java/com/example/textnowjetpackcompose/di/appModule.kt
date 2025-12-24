@@ -4,6 +4,8 @@ import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStore
+import androidx.room.Room
+import com.example.textnowjetpackcompose.config.PreferenceManager
 import com.example.textnowjetpackcompose.features.auth.data.remote.AuthApi
 import com.example.textnowjetpackcompose.features.auth.data.repository.AuthRepoImpl
 import com.example.textnowjetpackcompose.features.auth.domain.repository.AuthRepo
@@ -27,6 +29,7 @@ import io.ktor.client.plugins.logging.Logging
 import io.ktor.client.plugins.websocket.WebSockets
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
+import org.koin.android.ext.koin.androidApplication
 import org.koin.androidx.viewmodel.dsl.viewModelOf
 import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.bind
@@ -57,6 +60,9 @@ val appModule = module {
     // Utils
     single { get<Context>().dataStore }
     single { SocketHandler }
+
+    // Preference Manager
+    singleOf(::PreferenceManager)
 
     // Auth Dependencies
     singleOf(::AuthApi)

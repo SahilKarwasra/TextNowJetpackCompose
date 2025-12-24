@@ -40,7 +40,7 @@ fun SplashScreen(
                 navigate(DestinationScreen.SubGraphBottomBar)
             }
             is AuthState.UnAuthenticated -> {
-                navigate(DestinationScreen.SubGraphAuth)
+                navigate(DestinationScreen.LoginScreenObj)
             }
             else -> {}
         }

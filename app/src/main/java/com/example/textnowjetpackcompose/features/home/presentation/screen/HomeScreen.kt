@@ -1,8 +1,6 @@
 package com.example.textnowjetpackcompose.features.home.presentation.screen
 
-import android.content.Context
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -13,45 +11,54 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Search
-import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
-import com.example.textnowjetpackcompose.config.PreferenceManager
-import com.example.textnowjetpackcompose.features.auth.presentation.viewmodel.AuthState
-import com.example.textnowjetpackcompose.features.auth.presentation.viewmodel.AuthViewModel
 import com.example.textnowjetpackcompose.config.navigation.DestinationScreen
+import com.example.textnowjetpackcompose.features.auth.presentation.viewmodel.AuthViewModel
+import com.example.textnowjetpackcompose.features.chat.presentation.viewmodel.ChatViewModel
 import com.example.textnowjetpackcompose.features.home.presentation.components.ChatUserCard
 import com.example.textnowjetpackcompose.features.home.presentation.components.ChatUserCardShimmer
 import com.example.textnowjetpackcompose.features.home.presentation.viewmodel.HomeScreenState
 import com.example.textnowjetpackcompose.features.home.presentation.viewmodel.HomeScreenViewModel
-import com.example.textnowjetpackcompose.features.shared.BottomNavigation
+import kotlinx.coroutines.launch
 
 @Composable
 fun HomeScreen(
-    modifier: Modifier = Modifier,
-    authViewModel: AuthViewModel,
     navigate: (DestinationScreen) -> Unit,
-    navController: NavController,
-    homeScreenViewModel: HomeScreenViewModel,
+    homeViewModel: HomeScreenViewModel,
+    chatViewModel: ChatViewModel
 ) {
 
-    val homeState by homeScreenViewModel.state.collectAsStateWithLifecycle()
+    val homeState by homeViewModel.state.collectAsStateWithLifecycle()
     val lazyColumnState = rememberLazyListState()
-    val currentUser = homeScreenViewModel.currentUser.value
+    val currentUser by homeViewModel.currentUser
+
+
+    LaunchedEffect(homeState) {
+        if (homeState is HomeScreenState.Success) {
+            val users = (homeState as HomeScreenState.Success).users
+            if (users.isNotEmpty()) {
+                users.forEach {
+                    chatViewModel.loadMessages(it.id)
+                }
+            }
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -118,13 +125,13 @@ fun HomeScreen(
                 }
 
                 is HomeScreenState.Success -> {
-                    val messages = (homeState as HomeScreenState.Success).messages
-                    items(messages.size) { index ->
-                        val user = messages[index]
+                    val users = (homeState as HomeScreenState.Success).users
+                    items(users.size) { index ->
+                        val user = users[index]
                         ChatUserCard(
                             profilePicUrl = user.profilePic,
                             name = user.fullName,
-                            message = user.lastMessage?.text ?: "",
+                            message = user.lastMessage?.text ?: "No Messages Yet!!",
                             time = user.lastMessage?.createdAt ?: "",
                             unreadCount = 0
                         ) {

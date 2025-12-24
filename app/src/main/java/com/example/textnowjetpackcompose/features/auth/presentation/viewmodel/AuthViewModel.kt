@@ -21,9 +21,9 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 class AuthViewModel(
-    private val authRepository: AuthRepo, applicationContext: Context
+    private val authRepository: AuthRepo, applicationContext: Context,
+    private val preferenceManager: PreferenceManager
 ) : ViewModel() {
-    private val preferenceManager = PreferenceManager(context = applicationContext)
     private val _authState = MutableStateFlow<AuthState>(AuthState.Idle)
     val authState = _authState.asStateFlow()
 

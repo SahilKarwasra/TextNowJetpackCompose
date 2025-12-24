@@ -1,7 +1,7 @@
 package com.example.textnowjetpackcompose.config
 
 object HttpRoutes {
-    const val BASE_URL = "http://192.168.1.7:5001"
+    const val BASE_URL = "http://192.168.1.65:5001"
 
     // Auth Routes
     const val signup = "$BASE_URL/api/auth/signup"

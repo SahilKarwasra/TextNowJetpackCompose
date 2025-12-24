@@ -1,6 +1,5 @@
 package com.example.textnowjetpackcompose.features.home.presentation.viewmodel
 
-import android.content.Context
 import android.util.Log
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
@@ -9,7 +8,10 @@ import com.example.textnowjetpackcompose.config.PreferenceManager
 import com.example.textnowjetpackcompose.features.home.domain.repo.HomeRepo
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.time.Instant
@@ -20,18 +22,18 @@ import java.time.temporal.ChronoUnit
 
 class HomeScreenViewModel(
     private val homeRepo: HomeRepo,
-    applicationContext: Context
+    private val preferenceManager: PreferenceManager
 ) : ViewModel() {
 
     private val _state = MutableStateFlow<HomeScreenState>(HomeScreenState.Loading)
     val state = _state.asStateFlow()
-
-    init {
-        getUsers()
-    }
-    val preferenceManager = PreferenceManager(context = applicationContext)
+        .onStart { getUsers() }
+        .stateIn(
+            viewModelScope,
+            SharingStarted.WhileSubscribed(5000),
+            HomeScreenState.Loading
+        )
     val currentUser = mutableStateOf(preferenceManager.getUser())
-
 
     fun getUsers() {
         viewModelScope.launch {

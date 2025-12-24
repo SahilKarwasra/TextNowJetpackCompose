@@ -13,4 +13,5 @@ class TextNowApp: Application() {
             modules(appModule)
         }
     }
+
 }

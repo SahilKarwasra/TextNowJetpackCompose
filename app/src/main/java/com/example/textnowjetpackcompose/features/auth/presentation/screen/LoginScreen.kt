@@ -69,7 +69,6 @@ import kotlinx.coroutines.launch
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun LoginScreen(
-    modifier: Modifier = Modifier,
     navigate: (DestinationScreen) -> Unit,
     viewModel: AuthViewModel,
     snackbarHostState: SnackbarHostState,

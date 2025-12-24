@@ -20,6 +20,7 @@ import io.ktor.client.request.post
 import io.ktor.client.request.put
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.HttpResponse
+import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.Headers
 import io.ktor.http.HttpHeaders
@@ -48,6 +49,8 @@ class AuthApi(
                     contentType(ContentType.Application.Json)
                     setBody(request)
                 }
+                Log.d("AuthApiImpl", "signup: Response status: ${response.status}")
+                Log.d("AuthApiImpl", "signup: Response body: ${response.bodyAsText()}")
                 val token = response.headers[HttpHeaders.SetCookie]
                 Log.d("Cookie Signup", "signup: Set-Cookie header: $token")
                 if (token != null) {

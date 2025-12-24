@@ -20,6 +20,8 @@ material3-adaptive = "1.1.0"
 compose-material-icons-extended = "1.7.8"
 material3Expressive = "1.5.0-alpha04"
 navigationCompose = "2.9.5"
+roomKtx = "2.8.1"
+workRuntimeKtx = "2.10.5"
 
 [libraries]
 accompanist-placeholder-material = { module = "com.google.accompanist:accompanist-placeholder-material", version.ref = "accompanistPlaceholderMaterial" }
@@ -28,6 +30,11 @@ androidx-datastore-preferences = { module = "androidx.datastore:datastore-prefer
 androidx-material3-adaptive-navigation-suite = { module = "androidx.compose.material3:material3-adaptive-navigation-suite", version.ref = "material3Expressive" }
 androidx-material3-expressive = { module = "androidx.compose.material3:material3-expressive", version.ref = "material3Expressive" }
 androidx-material3-window-size-class1 = { module = "androidx.compose.material3:material3-window-size-class", version.ref = "material3Expressive" }
+androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref = "roomKtx" }
+androidx-room-ktx = { module = "androidx.room:room-ktx", version.ref = "roomKtx" }
+androidx-room-runtime = { module = "androidx.room:room-runtime", version.ref = "roomKtx" }
+androidx-work-runtime = { module = "androidx.work:work-runtime", version.ref = "workRuntimeKtx" }
+androidx-work-runtime-ktx = { module = "androidx.work:work-runtime-ktx", version.ref = "workRuntimeKtx" }
 coil-compose = { module = "io.coin-kt:coil-compose", version.ref = "coilCompose" }
 coil-network-okhttp = { module = "io.coil-kt.coil3:coil-network-okhttp", version.ref = "coilNetworkOkhttp" }
 coil3-coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coilComposeVersion" }

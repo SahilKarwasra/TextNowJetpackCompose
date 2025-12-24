@@ -14,6 +14,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicText
+import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -21,10 +23,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import com.example.textnowjetpackcompose.R
 
@@ -66,7 +71,8 @@ fun ChatUserCard(
                         .size(64.dp)
                         .clip(CircleShape),
                     placeholder = painterResource(R.drawable.avatar),
-                    error = painterResource(R.drawable.avatar)
+                    error = painterResource(R.drawable.avatar),
+                    contentScale = ContentScale.Crop
                 )
 
             }
@@ -94,9 +100,13 @@ fun ChatUserCard(
                     .padding(end = 20.dp, top = 18.dp),
                 horizontalAlignment = Alignment.End
             ) {
-                Text(
+                BasicText(
                     text = time,
-                    style = MaterialTheme.typography.labelMedium,
+                    maxLines = 1,
+                    autoSize = TextAutoSize.StepBased(maxFontSize = 14.sp),
+                    style = TextStyle(
+                        color = MaterialTheme.colorScheme.inverseSurface
+                    ),
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
