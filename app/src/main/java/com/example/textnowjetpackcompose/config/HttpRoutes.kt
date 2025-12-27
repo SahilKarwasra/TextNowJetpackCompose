@@ -15,6 +15,8 @@ object HttpRoutes {
     const val getMessages = "$BASE_URL/api/messages/"
     const val sendMessages = "$BASE_URL/api/messages/send/"
     const val generateText = "$BASE_URL/api/messages/generate-text"
+    const val saveFcmToken = "$BASE_URL/api/messages/save-fcm-token"
+
 
 
 }

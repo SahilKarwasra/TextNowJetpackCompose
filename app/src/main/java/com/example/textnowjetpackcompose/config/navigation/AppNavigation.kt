@@ -1,5 +1,6 @@
 package com.example.textnowjetpackcompose.config.navigation
 
+import android.annotation.SuppressLint
 import android.util.Log
 import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.fadeIn
@@ -57,6 +58,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import org.koin.androidx.compose.koinViewModel
 
+@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AppNavigation() {
@@ -129,9 +131,7 @@ fun AppNavigation() {
             if (showBottomBar) {
                 BottomNavigation(
                     navController = navController,
-                    navigate = {
-                        navController.navigate(it)
-                    }
+                    navigate = navController::navigate
                 )
             }
         },
@@ -144,7 +144,7 @@ fun AppNavigation() {
         NavHost(
             navController = navController,
             startDestination = DestinationScreen.SubGraphAuth,
-            modifier = Modifier.padding(it)
+            modifier = Modifier.padding()
         ) {
 
             authenticationGraph(
@@ -182,12 +182,14 @@ fun NavGraphBuilder.bottomBarGraph(
         ) {
             val homeViewModel : HomeScreenViewModel = it.sharedKoinViewModel(appController)
             val chatViewModel : ChatViewModel = it.sharedKoinViewModel(appController)
+            val authViewModel : AuthViewModel = it.sharedKoinViewModel(appController)
             HomeScreen(
                 navigate = {
                     appController.navigate(it)
                 },
                 homeViewModel = homeViewModel,
-                chatViewModel = chatViewModel
+                chatViewModel = chatViewModel,
+                authViewModel = authViewModel
             )
 
         }

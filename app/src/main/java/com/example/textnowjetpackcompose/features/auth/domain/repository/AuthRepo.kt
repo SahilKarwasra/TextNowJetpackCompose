@@ -11,4 +11,5 @@ interface AuthRepo {
     suspend fun checkAuth() : Result<UserResponse>
     suspend fun updateProfile(imageUri: ByteArray): HttpResponse
     suspend fun logout() : HttpResponse
+    suspend fun saveFcmToken(fcmToken: String): Result<Unit>
 }

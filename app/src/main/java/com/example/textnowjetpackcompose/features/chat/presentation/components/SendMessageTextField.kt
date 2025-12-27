@@ -2,6 +2,7 @@ package com.example.textnowjetpackcompose.features.chat.presentation.components
 
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
@@ -40,6 +41,7 @@ fun SendMessageTextField(
 ) {
     Surface(
         modifier = modifier.padding(horizontal = 20.dp)
+            .navigationBarsPadding()
     ) {
 
         val message by chatViewModel.onSendTextFieldValue

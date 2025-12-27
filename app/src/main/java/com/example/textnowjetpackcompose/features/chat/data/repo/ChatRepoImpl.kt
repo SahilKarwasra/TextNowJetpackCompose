@@ -1,7 +1,7 @@
 package com.example.textnowjetpackcompose.features.chat.data.repo
 
+import android.util.Log
 import com.example.textnowjetpackcompose.features.chat.data.remote.ChatApi
-import com.example.textnowjetpackcompose.features.chat.domain.model.MessageEntity
 import com.example.textnowjetpackcompose.features.chat.domain.model.MessageModel
 import com.example.textnowjetpackcompose.features.chat.domain.model.MessageRequest
 import com.example.textnowjetpackcompose.features.chat.domain.repo.ChatRepo
@@ -15,17 +15,7 @@ class ChatRepoImpl(
     ): Result<List<MessageModel>> {
         try {
             val result = chatApi.getMessages(receiverId)
-            val entities = result.map { message ->
-                MessageEntity(
-                    senderId = message.senderId,
-                    receiverId = message.receiverId,
-                    text = message.text,
-                    image = message.image,
-                    createdAt = message.createdAt,
-                    updatedAt = message.updatedAt,
-                    id = message._id
-                )
-            }
+
             return Result.success(result)
         } catch (e: Exception) {
             return Result.failure(e)
@@ -39,8 +29,10 @@ class ChatRepoImpl(
     ): Result<MessageModel> {
         try {
             val result = chatApi.sendMessage(receiverId, messageRequest)
+            Log.d("SendMessage", "Success: message sent to $receiverId")
             return Result.success(result)
         } catch (e: Exception) {
+            Log.e("SendMessage", "Failed to send message to $receiverId", e)
             return Result.failure(e)
         }
     }

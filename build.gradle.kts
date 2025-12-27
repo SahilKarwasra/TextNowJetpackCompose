@@ -6,5 +6,5 @@ plugins {
     alias(libs.plugins.compose.compiler) apply false
     id("com.google.devtools.ksp") version "2.2.10-2.0.2" apply false
     id("androidx.room") version "2.8.1" apply false
-
+    id("com.google.gms.google-services") version "4.4.4" apply false
 }

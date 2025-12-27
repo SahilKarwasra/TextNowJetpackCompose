@@ -5,6 +5,7 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
     id("com.google.devtools.ksp")
     id("androidx.room")
+    id("com.google.gms.google-services")
 }
 
 android {
@@ -89,4 +90,8 @@ dependencies {
     // Work Manager
     implementation(libs.androidx.work.runtime)
     implementation(libs.androidx.work.runtime.ktx)
+
+    // FCM
+    implementation(platform("com.google.firebase:firebase-bom:34.7.0"))
+    implementation("com.google.firebase:firebase-messaging")
 }

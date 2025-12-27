@@ -53,4 +53,13 @@ class AuthRepoImpl(
         }
     }
 
+    override suspend fun saveFcmToken(fcmToken: String): Result<Unit> {
+        return try {
+            authApi.saveFcmToken(fcmToken)
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
 }

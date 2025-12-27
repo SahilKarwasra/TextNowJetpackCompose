@@ -1,11 +1,16 @@
 package com.example.textnowjetpackcompose.features.home.presentation.screen
 
+import android.Manifest
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -41,13 +46,29 @@ import kotlinx.coroutines.launch
 fun HomeScreen(
     navigate: (DestinationScreen) -> Unit,
     homeViewModel: HomeScreenViewModel,
-    chatViewModel: ChatViewModel
+    chatViewModel: ChatViewModel,
+    authViewModel: AuthViewModel
 ) {
 
     val homeState by homeViewModel.state.collectAsStateWithLifecycle()
     val lazyColumnState = rememberLazyListState()
     val currentUser by homeViewModel.currentUser
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (granted) {
+            // Permission granted
+        } else {
+            // Permission denied
+        }
+    }
 
+    LaunchedEffect(Unit) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+        }
+        authViewModel.saveFcmTokenIfNeeded()
+    }
 
     LaunchedEffect(homeState) {
         if (homeState is HomeScreenState.Success) {
@@ -65,6 +86,7 @@ fun HomeScreen(
             .fillMaxSize()
             .background(color = MaterialTheme.colorScheme.surface)
             .padding(horizontal = 18.dp)
+            .statusBarsPadding()
     ) {
         Text(
             "Chats",

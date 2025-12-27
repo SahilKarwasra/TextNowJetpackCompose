@@ -25,6 +25,7 @@ import io.ktor.http.ContentType
 import io.ktor.http.Headers
 import io.ktor.http.HttpHeaders
 import io.ktor.http.contentType
+import io.ktor.http.headers
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.withContext
@@ -166,6 +167,29 @@ class AuthApi(
                 response
             } catch (e: Exception) {
                 e.printStackTrace()
+                throw e
+            }
+        }
+    }
+    suspend fun saveFcmToken(fcmToken: String) {
+        val token = dataStore.data.firstOrNull()?.get(authTokenKey)
+        val rawToken = token?.substringBefore(";")
+
+        return withContext(Dispatchers.IO) {
+            try {
+                val response = client.post(HttpRoutes.saveFcmToken) {
+                    contentType(ContentType.Application.Json)
+                    headers {
+                        append(HttpHeaders.Cookie, rawToken ?: "")
+                    }
+                    setBody(
+                        mapOf("fcmToken" to fcmToken)
+                    )
+                }
+
+                Log.d("FCM", "saveFcmToken status: ${response.status}")
+            } catch (e: Exception) {
+                Log.e("FCM", "saveFcmToken failed", e)
                 throw e
             }
         }

@@ -5,7 +5,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.textnowjetpackcompose.config.SocketHandler
-import com.example.textnowjetpackcompose.features.chat.domain.model.MessageEntity
 import com.example.textnowjetpackcompose.features.chat.domain.model.MessageModel
 import com.example.textnowjetpackcompose.features.chat.domain.model.MessageRequest
 import com.example.textnowjetpackcompose.features.chat.domain.repo.ChatRepo

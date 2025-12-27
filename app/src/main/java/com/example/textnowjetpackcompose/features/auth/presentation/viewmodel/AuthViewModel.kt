@@ -14,14 +14,16 @@ import com.example.textnowjetpackcompose.features.home.domain.model.UserResponse
 import com.example.textnowjetpackcompose.features.auth.domain.repository.AuthRepo
 import com.example.textnowjetpackcompose.config.SocketHandler
 import com.example.textnowjetpackcompose.config.PreferenceManager
+import com.google.firebase.messaging.FirebaseMessaging
 import io.ktor.client.call.body
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 
 class AuthViewModel(
-    private val authRepository: AuthRepo, applicationContext: Context,
+    private val authRepository: AuthRepo,
     private val preferenceManager: PreferenceManager
 ) : ViewModel() {
     private val _authState = MutableStateFlow<AuthState>(AuthState.Idle)
@@ -172,6 +174,24 @@ class AuthViewModel(
             }
         }
     }
+
+    private var fcmSaved = false
+
+    fun saveFcmTokenIfNeeded() {
+        if (fcmSaved) return
+
+        viewModelScope.launch {
+            try {
+                val token = FirebaseMessaging.getInstance().token.await()
+                authRepository.saveFcmToken(token)
+                fcmSaved = true
+                Log.d("FCM", "FCM token saved to backend")
+            } catch (e: Exception) {
+                Log.e("FCM", "Failed to save FCM token", e)
+            }
+        }
+    }
+
 
     private fun connectSocket(userId: String) {
         SocketHandler.setSocket(userId)
